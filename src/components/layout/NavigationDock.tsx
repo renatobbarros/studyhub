@@ -7,13 +7,15 @@ import {
   Calendar, 
   Timer, 
   Trophy,
-  Sparkles
+  Sparkles,
+  Zap
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Dash", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Desacumular", href: "/desacumulo", icon: Zap },
   { name: "Agenda", href: "/calendar", icon: Calendar },
   { name: "Ranking", href: "/ranking", icon: Trophy },
   { name: "Pomodoro", href: "/timer", icon: Timer },
