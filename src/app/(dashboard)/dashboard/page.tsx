@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { verifyServerSession, syncUserProfile } from "@/actions/auth";
+
+export const dynamic = "force-dynamic";
 import { StatCard } from "@/components/dashboard/StatCard";
 import ScheduleUpload from "@/components/dashboard/ScheduleUpload";
 import ReinforcementSection from "@/components/dashboard/ReinforcementSection";
