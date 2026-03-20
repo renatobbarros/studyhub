@@ -1,6 +1,5 @@
 "use client";
 
-import { Sidebar } from "@/components/layout/Sidebar"; // Will remove in next step
 import { NavigationDock } from "@/components/layout/NavigationDock";
 import TopBar from "@/components/layout/TopBar";
 

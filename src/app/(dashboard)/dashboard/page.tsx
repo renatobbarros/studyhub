@@ -112,7 +112,8 @@ export default async function DashboardPage() {
                        <div className="flex items-center gap-2">
                           <DifficultyToggle 
                             subject={task.subject || task.title} 
-                            isInitialDifficulty={userData?.subjectDifficulties?.includes(task.subject || task.title)} 
+                            isInitialDifficulty={(userData as any)?.subjectDifficulties?.includes(task.subject || task.title)}
+ 
                           />
                           <span className="text-sm font-bold text-foreground/80">{task.date}</span>
                        </div>
