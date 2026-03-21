@@ -16,6 +16,11 @@
   
   --color-danger-500: #ef4444; /* Vermelho deadlines */
   
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
 

@@ -27,13 +27,23 @@ function getFirebaseAdmin() {
   return admin;
 }
 
-// We use proxies or simple getters to avoid top-level failures
+// Utility to get admin without top-level failures
 export const adminDb = (() => {
-  const app = getFirebaseAdmin();
-  return app ? app.firestore() : (null as any);
-})();
+  try {
+    const app = getFirebaseAdmin();
+    return app ? app.firestore() : null;
+  } catch (error) {
+    console.error('Failed to initialize adminDb', error);
+    return null;
+  }
+})() as any;
 
 export const adminAuth = (() => {
-  const app = getFirebaseAdmin();
-  return app ? app.auth() : (null as any);
-})();
+  try {
+    const app = getFirebaseAdmin();
+    return app ? app.auth() : null;
+  } catch (error) {
+    console.error('Failed to initialize adminAuth', error);
+    return null;
+  }
+})() as any;
