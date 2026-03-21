@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { verifyServerSession, syncUserProfile } from "@/actions/auth";
+import { verifyServerSession, syncUserProfile, getGuildMembers } from "@/actions/auth";
+import { getDashboardStats, getCriticalDates } from "@/actions/dashboard";
 
 export const dynamic = "force-dynamic";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -16,6 +17,9 @@ export default async function DashboardPage() {
   }
 
   const userData = await syncUserProfile();
+  const stats = await getDashboardStats();
+  const criticalDates = await getCriticalDates();
+  const members = await getGuildMembers();
 
   return (
     <div className="pt-24 pb-12 space-y-12 max-w-7xl mx-auto">
@@ -30,7 +34,7 @@ export default async function DashboardPage() {
               Olá, {userData?.name?.split(' ')[0] || "Estudante"}!
             </h1>
             <p className="text-xl text-white/60 leading-relaxed">
-              Sua guilda está com <span className="text-white font-bold">85% de produtividade</span> hoje. 
+              Sua guilda está com <span className="text-white font-bold">{stats?.productivity || 0}% de produtividade</span> hoje. 
               Continue assim para manter o topo do ranking!
             </p>
          </div>
@@ -45,42 +49,42 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <StatCard 
           title="XP Total" 
-          value={userData?.xp?.toLocaleString() || "0"} 
+          value={stats?.totalXp?.toLocaleString() || "0"} 
           icon={<Trophy className="w-5 h-5 text-yellow-500" />} 
           trend="XP Acumulado"
           color="accent"
         />
         <StatCard 
           title="Nível" 
-          value={userData?.level?.toString() || "1"} 
+          value={stats?.level?.toString() || "1"} 
           icon={<Star className="w-5 h-5 text-primary-400" />} 
           trend="Próximo em 24h"
           color="primary"
         />
         <StatCard 
           title="Rank" 
-          value="#1" 
+          value={stats?.rank || "#1"} 
           icon={<Target className="w-5 h-5 text-indigo-400" />} 
-          trend="Líder do grupo"
+          trend="Posição no grupo"
         />
         <StatCard 
           title="Tasks" 
-          value="12" 
+          value={stats?.tasksCompleted?.toString() || "0"} 
           icon={<CheckCircle2 className="w-5 h-5 text-emerald-400" />} 
-          trend="+3 concluídas"
+          trend="Tasks de hoje"
         />
         <StatCard 
           title="Streak" 
-          value={`${userData?.streak || 0}d`} 
+          value={`${stats?.streak || 0}d`} 
           icon={<Flame className="h-5 w-5 text-orange-500" />} 
           trend="🔥 No fogo!"
           color="danger"
         />
         <StatCard 
           title="Foco" 
-          value="4.5h" 
+          value={stats?.focusHours || "0h"} 
           icon={<Clock className="w-5 h-5 text-blue-400" />} 
-          trend="Meta de 5h"
+          trend="Meta diária"
         />
       </div>
 
@@ -103,19 +107,16 @@ export default async function DashboardPage() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             {[
-               { title: "Prova de Cálculo I", date: "15 Abr", type: "Urgente", color: "bg-danger-500", subject: "Cálculo I" },
-               { title: "Trabalho de Anatomia", date: "20 Abr", type: "Entrega", color: "bg-primary-500", subject: "Anatomia" },
-             ].map((task, i) => (
+             {criticalDates.map((task: any, i: number) => (
                 <div key={i} className="group relative p-6 rounded-3xl border bg-white/50 dark:bg-black/20 glass hover:scale-[1.02] transition-all cursor-pointer overflow-hidden">
-                   <div className={cn("absolute top-0 left-0 w-1.5 h-full", task.color)} />
+                   <div className={cn("absolute top-0 left-0 w-1.5 h-full", task.color || "bg-primary-500")} />
                     <div className="flex items-center justify-between mb-4">
-                       <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">{task.type}</span>
+                       <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">{task.type || "DeadLine"}</span>
                        <div className="flex items-center gap-2">
                           <DifficultyToggle 
                             subject={task.subject || task.title} 
                             isInitialDifficulty={(userData as any)?.subjectDifficulties?.includes(task.subject || task.title)}
- 
+  
                           />
                           <span className="text-sm font-bold text-foreground/80">{task.date}</span>
                        </div>
@@ -133,24 +134,20 @@ export default async function DashboardPage() {
               Membros
            </h2>
            <div className="rounded-[2rem] border bg-background/50 p-6 glass space-y-4">
-              {[
-                { name: "Você", xp: userData?.xp || 0, img: userData?.avatar, rank: 1 },
-                { name: "Guilherme", xp: 1250, rank: 2 },
-                { name: "Ana Clara", xp: 980, rank: 3 },
-              ].map((m, i) => (
+              {members.map((m: any, i: number) => (
                 <div key={i} className="flex items-center justify-between p-3 rounded-2xl hover:bg-foreground/5 transition group">
-                  <div className="flex items-center gap-4">
-                     <div className="relative">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary-100 to-indigo-100 flex items-center justify-center text-primary-600 font-bold border-2 border-transparent group-hover:border-primary-500 transition-all">
-                           {m.img ? <img src={m.img} className="w-full h-full rounded-full" /> : m.name[0]}
-                        </div>
-                        {m.rank === 1 && <Trophy className="absolute -top-1 -right-1 w-4 h-4 text-accent-500 fill-accent-500 drop-shadow-md" />}
-                     </div>
-                     <div>
-                        <p className="font-bold text-foreground text-sm">{m.name}</p>
-                        <p className="text-[10px] text-foreground/40 font-black uppercase tracking-widest">{m.xp} XP acumulado</p>
-                     </div>
-                  </div>
+                   <div className="flex items-center gap-4">
+                      <div className="relative">
+                         <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary-100 to-indigo-100 flex items-center justify-center text-primary-600 font-bold border-2 border-transparent group-hover:border-primary-500 transition-all">
+                            {m.avatar ? <img src={m.avatar} className="w-full h-full rounded-full" /> : (m.name?.[0] || m.displayName?.[0] || "?")}
+                         </div>
+                         {i === 0 && <Trophy className="absolute -top-1 -right-1 w-4 h-4 text-accent-500 fill-accent-500 drop-shadow-md" />}
+                      </div>
+                      <div>
+                         <p className="font-bold text-foreground text-sm">{m.name || m.displayName || "Jogador"}</p>
+                         <p className="text-[10px] text-foreground/40 font-black uppercase tracking-widest">{m.xp || 0} XP acumulado</p>
+                      </div>
+                   </div>
                 </div>
               ))}
               

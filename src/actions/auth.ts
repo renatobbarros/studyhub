@@ -76,3 +76,19 @@ export async function syncUserProfile() {
   return userData;
 }
 
+export async function getGuildMembers() {
+  const session = await verifyServerSession();
+  if (!session) return [];
+
+  try {
+    const snapshot = await adminDb.collection("users").orderBy("xp", "desc").limit(10).get();
+    return snapshot.docs.map((doc: any) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error("Error fetching guild members", error);
+    return [];
+  }
+}
+

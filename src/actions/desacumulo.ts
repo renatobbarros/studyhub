@@ -9,13 +9,13 @@ import OpenAI from "openai";
 /**
  * Adiciona um novo conteúdo compartilhado de "Desacumulo"
  */
-export async function addDesacumuloEntry(content: string) {
+export async function addDesacumuloEntry(content: string, subject: string = "Geral") {
   const decoded = await verifyServerSession();
   if (!decoded) throw new Error("Unauthorized");
 
   // 1. Extrair palavras-chave usando Cerebras
   const apiKey = process.env.CEREBRAS_API_KEY;
-  let keywords = [content.split(" ")[0]]; // Fallback
+  let keywords = [subject, content.split(" ")[0]].filter(Boolean); // Fallback
 
   if (apiKey) {
     const client = new OpenAI({
@@ -30,7 +30,7 @@ export async function addDesacumuloEntry(content: string) {
             content: "Você é um assistente acadêmico. Extraia os 2 termos mais importantes para busca no YouTube do texto abaixo. Retorne apenas os termos separados por vírgula." 
         }, { 
             role: "user", 
-            content: content 
+            content: `Matéria: ${subject}. Conteúdo: ${content}` 
         }],
         model: "llama3.3-70b",
       });
@@ -53,10 +53,11 @@ export async function addDesacumuloEntry(content: string) {
     }
   }
 
-  // 3. Salvar no Firestore (Escopo Global por enquanto, ou associado ao usuário)
+  // 3. Salvar no Firestore
   const entryRef = adminDb.collection("desacumulo").doc();
   await entryRef.set({
     content,
+    subject,
     userName: decoded.name || "Estudante",
     userId: decoded.uid,
     avatar: decoded.picture || null,
@@ -74,17 +75,19 @@ export async function addDesacumuloEntry(content: string) {
 }
 
 /**
- * Busca as últimas entradas de Desacumulo
+ * Busca as últimas entradas de Desacumulo com filtro opcional
  */
-export async function getDesacumuloFeed() {
+export async function getDesacumuloFeed(subject?: string) {
   const session = await verifyServerSession();
   if (!session) return { success: true, entries: [] };
 
-  const snapshot = await adminDb
-    .collection("desacumulo")
-    .orderBy("createdAt", "desc")
-    .limit(20)
-    .get();
+  let query = adminDb.collection("desacumulo").orderBy("createdAt", "desc");
+  
+  if (subject && subject !== "Geral") {
+    query = query.where("subject", "==", subject);
+  }
+
+  const snapshot = await query.limit(20).get();
 
   const entries = snapshot.docs.map((doc: any) => ({
     id: doc.id,
@@ -92,4 +95,26 @@ export async function getDesacumuloFeed() {
   }));
 
   return { success: true, entries };
+}
+
+/**
+ * Exclui uma entrada de Desacumulo (CRUD)
+ */
+export async function deleteDesacumuloEntry(id: string) {
+  const decoded = await verifyServerSession();
+  if (!decoded) throw new Error("Unauthorized");
+
+  try {
+    const docRef = adminDb.collection("desacumulo").doc(id);
+    const doc = await docRef.get();
+    
+    if (!doc.exists) return { success: false, error: "Post não encontrado" };
+    if (doc.data()?.userId !== decoded.uid) return { success: false, error: "Sem permissão" };
+
+    await docRef.delete();
+    revalidatePath("/desacumulo");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: "Erro ao excluir" };
+  }
 }
