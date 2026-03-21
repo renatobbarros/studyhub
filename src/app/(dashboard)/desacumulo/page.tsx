@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { Send, Zap, User, Video, ExternalLink, Loader2, Sparkles, Trash2, Filter } from "lucide-react";
 import { addDesacumuloEntry, getDesacumuloFeed, deleteDesacumuloEntry } from "@/actions/desacumulo";
