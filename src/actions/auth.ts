@@ -17,9 +17,13 @@ export async function createSessionCookie(idToken: string) {
     });
 
     return { success: true };
-  } catch (error) {
-    console.error("Session creation error", error);
-    return { success: false };
+  } catch (error: any) {
+    console.error("CRITICAL: Session creation error", {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+    });
+    return { success: false, error: error.message };
   }
 }
 

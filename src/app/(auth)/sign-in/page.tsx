@@ -24,7 +24,9 @@ export default function SignInPage() {
       
       console.log("Criando sessão...");
       const res = await createSessionCookie(idToken);
-      if (!res.success) throw new Error("Falha ao criar sessão segura.");
+      if (!res.success) {
+        throw new Error(res.error || "Falha ao criar sessão segura no servidor.");
+      }
       
       console.log("Sincronizando perfil...");
       await syncUserProfile();
