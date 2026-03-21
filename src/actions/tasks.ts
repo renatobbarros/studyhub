@@ -4,7 +4,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { verifyServerSession } from "./auth";
 import { revalidatePath } from "next/cache";
 
-export async function createTask(data: { title: string; description?: string; dueDate?: Date; subjectId?: string }) {
+export async function createTask(data: { title: string; description?: string; dueDate?: Date; subjectId?: string; status?: string }) {
   const decoded = await verifyServerSession();
   if (!decoded) throw new Error("Unauthorized");
 
@@ -14,7 +14,8 @@ export async function createTask(data: { title: string; description?: string; du
     dueDate: data.dueDate ? data.dueDate.toISOString() : null,
     subjectId: data.subjectId || null,
     userId: decoded.uid,
-    completed: false,
+    status: data.status || "todo",
+    completed: false, // Mantido para compatibilidade legado se necessário
     xpReward: 10,
     createdAt: new Date().toISOString(),
   };
@@ -41,5 +42,50 @@ export async function deleteTask(taskId: string) {
 
   revalidatePath("/dashboard");
   revalidatePath("/calendar");
+  return { success: true };
+}
+
+export async function updateTaskStatus(taskId: string, status: string) {
+  const decoded = await verifyServerSession();
+  if (!decoded) throw new Error("Unauthorized");
+
+  const docRef = adminDb.collection("tasks").doc(taskId);
+  const docSnap = await docRef.get();
+  
+  if (!docSnap.exists || docSnap.data()?.userId !== decoded.uid) {
+    throw new Error("Unauthorized or not found");
+  }
+
+  const completed = status === "done";
+  await docRef.update({ 
+    status, 
+    completed,
+    updatedAt: new Date().toISOString() 
+  });
+
+  revalidatePath("/calendar");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+export async function updateTask(taskId: string, data: Partial<{ title: string; description: string; dueDate: Date; status: string }>) {
+  const decoded = await verifyServerSession();
+  if (!decoded) throw new Error("Unauthorized");
+
+  const docRef = adminDb.collection("tasks").doc(taskId);
+  const docSnap = await docRef.get();
+  
+  if (!docSnap.exists || docSnap.data()?.userId !== decoded.uid) {
+    throw new Error("Unauthorized or not found");
+  }
+
+  const updateData: any = { ...data };
+  if (data.dueDate) updateData.dueDate = data.dueDate.toISOString();
+  if (data.status) updateData.completed = data.status === "done";
+
+  await docRef.update(updateData);
+
+  revalidatePath("/calendar");
+  revalidatePath("/dashboard");
   return { success: true };
 }
