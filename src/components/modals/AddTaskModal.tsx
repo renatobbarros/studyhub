@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent, ChangeEvent } from "react";
 import { X, Calendar as CalendarIcon, Star, Plus, Loader2 } from "lucide-react";
 import { createTask } from "@/actions/tasks";
 
@@ -18,7 +18,7 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
 
   if (!isOpen) return null;
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
 
@@ -64,7 +64,7 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
             <input
               autoFocus
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
               placeholder="Ex: Estudar Anatomia II"
               className="w-full bg-foreground/5 border-none rounded-2xl p-4 text-lg font-bold text-foreground focus:ring-2 ring-primary-500 transition outline-none"
               required
@@ -75,7 +75,7 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
             <label className="text-xs font-black uppercase tracking-widest text-foreground/40 ml-4">Detalhes (Opcional)</label>
             <textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
               placeholder="Capítulos 3 e 4, foco em ossos do crânio..."
               className="w-full bg-foreground/5 border-none rounded-2xl p-4 h-24 text-foreground focus:ring-2 ring-primary-500 transition outline-none resize-none"
             />
@@ -89,7 +89,7 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
                     <input
                         type="date"
                         value={dueDate}
-                        onChange={(e) => setDueDate(e.target.value)}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setDueDate(e.target.value)}
                         className="w-full bg-foreground/5 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-foreground focus:ring-2 ring-primary-500 transition outline-none appearance-none"
                     />
                 </div>
@@ -98,7 +98,7 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
                 <label className="text-xs font-black uppercase tracking-widest text-foreground/40 ml-4">Status Inicial</label>
                 <select
                     value={status}
-                    onChange={(e) => setStatus(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLSelectElement>) => setStatus(e.target.value)}
                     className="w-full bg-foreground/5 border-none rounded-2xl p-4 text-sm font-bold text-foreground focus:ring-2 ring-primary-500 transition outline-none appearance-none"
                 >
                     <option value="todo">A Fazer</option>

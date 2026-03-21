@@ -36,8 +36,8 @@ export default function CalendarPage() {
 
     const q = query(collection(db, "tasks"), where("userId", "==", user.uid));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const tasksData = snapshot.docs.map(doc => ({
+    const unsubscribe = onSnapshot(q, (snapshot: any) => {
+      const tasksData = snapshot.docs.map((doc: any) => ({
         id: doc.id,
         ...doc.data()
       })) as Task[];
@@ -70,7 +70,7 @@ export default function CalendarPage() {
     }
   });
 
-  const getTasksByStatus = (status: string) => filteredTasks.filter(t => (t.status || (t.completed ? "done" : "todo")) === status);
+  const getTasksByStatus = (status: string) => filteredTasks.filter((t: Task) => (t.status || "todo") === status);
 
   const handleMoveStatus = async (taskId: string, currentStatus: string) => {
     const nextStatus = currentStatus === "todo" ? "in_progress" : "done";
