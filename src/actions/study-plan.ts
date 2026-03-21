@@ -52,7 +52,7 @@ export async function parseScheduleWithAI(text: string) {
   // Batch creation of tasks
   const batch = adminDb.batch();
   
-  extractedData.forEach(item => {
+  extractedData.forEach((item: any) => {
     const taskRef = adminDb.collection("tasks").doc();
     batch.set(taskRef, {
       title: item.title,

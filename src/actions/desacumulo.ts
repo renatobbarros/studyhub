@@ -37,7 +37,7 @@ export async function addDesacumuloEntry(content: string) {
 
       const extracted = response.choices[0].message.content;
       if (extracted) {
-        keywords = extracted.split(",").map(k => k.trim());
+        keywords = extracted.split(",").map((k: string) => k.trim());
       }
     } catch (error) {
       console.error("Erro na extração de keywords da IA:", error);
@@ -86,7 +86,7 @@ export async function getDesacumuloFeed() {
     .limit(20)
     .get();
 
-  const entries = snapshot.docs.map(doc => ({
+  const entries = snapshot.docs.map((doc: any) => ({
     id: doc.id,
     ...doc.data()
   }));
