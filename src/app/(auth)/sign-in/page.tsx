@@ -4,28 +4,37 @@ import { useState } from "react";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import { useRouter } from "next/navigation";
+import { createSessionCookie, syncUserProfile } from "@/actions/auth";
 
 export default function SignInPage() {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleGoogleSignIn = async () => {
     try {
+      setError(null);
       setLoading(true);
       const provider = new GoogleAuthProvider();
+      console.log("Iniciando popup...");
       const result = await signInWithPopup(auth, provider);
       
+      console.log("Obtendo ID Token...");
       const idToken = await result.user.getIdToken();
       
-      // Save session in cookie for Server Actions and SSR
-      const authAction = await import("@/actions/auth");
-      await authAction.createSessionCookie(idToken);
-      await authAction.syncUserProfile();
+      console.log("Criando sessão...");
+      const res = await createSessionCookie(idToken);
+      if (!res.success) throw new Error("Falha ao criar sessão segura.");
+      
+      console.log("Sincronizando perfil...");
+      await syncUserProfile();
 
-      // Aqui faríamos a validação no Firebase Admin ou sincronização
-      router.push("/dashboard");
-    } catch (error) {
-      console.error("Erro ao fazer login:", error);
+      console.log("Redirecionando...");
+      // Forçar redirecionamento se o router do Next.js demorar
+      window.location.href = "/dashboard";
+    } catch (err: any) {
+      console.error("Erro detalhado login:", err);
+      setError(err.message || "Erro desconhecido ao entrar. Verifique sua conexão.");
     } finally {
       setLoading(false);
     }
@@ -35,6 +44,12 @@ export default function SignInPage() {
     <div className="bg-background/80 blur-[0.5px] border border-foreground/10 shadow-xl rounded-2xl p-8 w-full max-w-sm flex flex-col items-center">
       <h3 className="text-xl font-bold text-foreground mb-6">Acesse sua conta</h3>
       
+      {error && (
+        <div className="mb-4 p-3 rounded-lg bg-danger-500/10 border border-danger-500/20 text-danger-500 text-sm text-center">
+          {error}
+        </div>
+      )}
+
       <button 
         onClick={handleGoogleSignIn}
         disabled={loading}
