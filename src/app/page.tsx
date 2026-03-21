@@ -6,12 +6,28 @@ export default function Home() {
   // Por ora, a Landing page aparece sempre que estamos no /.
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-background">
+    <div className="min-h-screen flex flex-col relative overflow-hidden bg-background">
+      {/* Premium Frame Borders */}
+      <div className="fixed top-0 inset-x-0 h-[10px] bg-gradient-to-b from-primary-500/10 to-transparent z-50 pointer-events-none" />
+      <div className="fixed bottom-0 inset-x-0 h-[10px] bg-gradient-to-t from-accent-500/10 to-transparent z-50 pointer-events-none" />
+      <div className="fixed top-0 inset-x-0 h-px bg-white/10 z-50 pointer-events-none" />
+      <div className="fixed bottom-0 inset-x-0 h-px bg-white/10 z-50 pointer-events-none" />
+      
+      {/* Header Glassmorphism */}
+      <header className="sticky top-0 z-40 w-full px-8 py-5 flex justify-between items-center bg-background/40 backdrop-blur-md border-b border-white/5 mx-auto">
+        <div className="text-xl font-black bg-gradient-to-r from-primary-600 to-accent-500 bg-clip-text text-transparent">
+          STUDYHUB
+        </div>
+        <Link href="/sign-in" className="text-sm font-medium hover:text-primary-500 transition-colors">
+          Entrar
+        </Link>
+      </header>
+
       {/* Background Shapes */}
       <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-primary-500/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-accent-500/10 rounded-full blur-[100px] pointer-events-none" />
 
-      <main className="z-10 flex flex-col items-center text-center max-w-4xl px-6">
+      <main className="z-10 flex-1 flex flex-col items-center text-center max-w-4xl mx-auto px-6 py-20">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-50 border border-primary-100/50 mb-8">
           <span className="flex h-2 w-2 rounded-full bg-primary-600 animate-pulse"></span>
           <span className="text-sm font-semibold text-primary-900">A revolução dos estudos começou!</span>
@@ -22,12 +38,12 @@ export default function Home() {
           <span className="bg-gradient-to-r from-primary-600 to-accent-500 bg-clip-text text-transparent">Rotina Universitária</span>
         </h1>
         
-        <p className="text-xl text-foreground/60 mb-10 max-w-2xl leading-relaxed">
+        <p className="text-xl text-foreground/60 mb-10 max-w-2xl leading-relaxed mx-auto">
           O primeiro super app que transforma seus prazos, materiais e metodologias de estudo 
           em uma jornada épica gamificada no estilo RPG.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 items-center mb-24">
+        <div className="flex flex-col sm:flex-row gap-4 items-center mb-24 justify-center">
           <Link href="/sign-in" className="flex items-center gap-2 rounded-xl bg-primary-600 px-8 py-4 text-base font-bold text-white shadow-lg hover:bg-primary-500 hover:shadow-primary-500/25 transition hover:-translate-y-1">
             Entrar no Hub <ArrowRight className="w-5 h-5" />
           </Link>
@@ -63,8 +79,17 @@ export default function Home() {
         </div>
       </main>
 
+      {/* Footer Falso com borda */}
+      <footer className="z-20 w-full px-6 py-8 border-t border-white/5 bg-background/50 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-foreground/40">
+        <div>© 2026 StudyHub - O RPG da sua Graduação</div>
+        <div className="flex gap-6">
+          <a href="#" className="hover:text-foreground">Políticas</a>
+          <a href="#" className="hover:text-foreground">Termos</a>
+        </div>
+      </footer>
+
       {/* Decorative gradients */}
-      <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent pointer-events-none" />
     </div>
   );
 }
