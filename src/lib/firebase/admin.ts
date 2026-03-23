@@ -38,16 +38,19 @@ function getFirebaseAdmin() {
 // Handler genérico para mocks de banco de dados e autenticação
 const mockHandler = {
   get: (target: any, prop: string): any => {
-    // Se for uma das funções de construção de query ou acesso
+    // Evita loop infinito se prop for transformado em string repetidamente
+    if (typeof prop === 'symbol') return undefined;
+
     const methods = ['collection', 'doc', 'where', 'orderBy', 'limit', 'auth', 'firestore'];
     if (methods.includes(prop)) {
       return () => new Proxy({}, mockHandler);
     }
 
     // Se for uma função de execução, retorna uma promise resolvida
-    const execMethods = ['get', 'set', 'update', 'add', 'delete', 'verifyIdToken', 'createSessionCookie'];
+    const execMethods = ['get', 'set', 'update', 'add', 'delete', 'verifyIdToken', 'createSessionCookie', 'verifySessionCookie'];
     if (execMethods.includes(prop)) {
       return async () => ({
+        uid: 'mock-user',
         id: 'mock-id',
         exists: false,
         empty: true,
@@ -56,20 +59,23 @@ const mockHandler = {
       });
     }
 
-    // Fallback recursivo para permitir encadeamento infinito adminDb.foo().bar().baz()
+    // Fallback recursivo silenciado
     return new Proxy(() => new Proxy({}, mockHandler), mockHandler);
   }
 };
 
 /**
  * Proxies que decidem entre a instância real do Firebase ou um Mock silencioso.
- * Isso evita que o build do Next.js quebre ao tentar pré-renderizar páginas estáticas (como 404)
- * que podem indiretamente importar lógica de banco de dados.
  */
 export const adminDb: any = new Proxy({}, {
   get: (target, prop) => {
     const app = getFirebaseAdmin();
-    if (!app) return mockHandler.get(target, prop as string);
+    if (!app) {
+      if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+        console.warn(`[StudyHub Admin] Usando MOCK para adminDb.${String(prop)} - Verifique as ENVs.`);
+      }
+      return mockHandler.get(target, prop as string);
+    }
     return (app.firestore() as any)[prop];
   }
 });
@@ -77,7 +83,12 @@ export const adminDb: any = new Proxy({}, {
 export const adminAuth: any = new Proxy({}, {
   get: (target, prop) => {
     const app = getFirebaseAdmin();
-    if (!app) return mockHandler.get(target, prop as string);
+    if (!app) {
+      if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+        console.warn(`[StudyHub Admin] Usando MOCK para adminAuth.${String(prop)} - Verifique as ENVs.`);
+      }
+      return mockHandler.get(target, prop as string);
+    }
     return (app.auth() as any)[prop];
   }
 });
