@@ -24,17 +24,11 @@ export async function addDesacumuloEntry(content: string, subject: string = "Ger
       baseURL: "https://api.cerebras.ai/v1",
     });
 
-    const prompt = `Analise o conteúdo acadêmico sobre a matéria "${subject}".
-Sua tarefa é retornar um JSON estritamente estruturado:
+    const prompt = `Analise a lista de tópicos sobre a matéria "${subject}".
+Sua tarefa é retornar um JSON com termos de busca para o YouTube:
 {
-  "formattedContent": "Apenas os conceitos-chave reescritos de forma telegráfica em bullet points. A primeira linha deve ser o conceito principal precedido de '- ', e os detalhes técnicos devem ser subtópicos indentados abaixo. REMOVA QUALQUER INTRODUÇÃO, SAUDAÇÃO OU EXPLICAÇÃO FORA DA LISTA.",
-  "searchQueries": ["assunto", "tópico específico"] // 2 termos de busca otimizados para YouTube
+  "searchQueries": ["termo de busca 1", "termo de busca 2"] // 2 termos curtos e muito específicos focado em encontrar videoaulas no YouTube sobre os tópicos listados.
 }
-ESTRITAMENTE PROIBIDO: Texto livre, parágrafos longos, conversa com o usuário. Somente a hierarquia de tópicos.
-Exemplo:
-- Equações Diferenciais
-  - Método de separação de variáveis
-  - Condições de contorno de Dirichlet
 Retorne APENAS o JSON.`;
 
     try {
@@ -53,9 +47,6 @@ Retorne APENAS o JSON.`;
       const messageContent = response.choices[0].message.content;
       if (messageContent) {
         const parsed = JSON.parse(messageContent);
-        if (parsed.formattedContent) {
-          formattedContent = parsed.formattedContent;
-        }
         if (parsed.searchQueries && Array.isArray(parsed.searchQueries) && parsed.searchQueries.length > 0) {
           keywords = parsed.searchQueries;
         }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Send, Zap, User, Video, ExternalLink, Loader2, Sparkles, Trash2, Filter, Pencil } from "lucide-react";
+import { Send, Zap, User, Video, ExternalLink, Loader2, Sparkles, Trash2, Filter, Pencil, Plus, X as CloseIcon } from "lucide-react";
 import { addDesacumuloEntry, getDesacumuloFeed, deleteDesacumuloEntry } from "@/actions/desacumulo";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { getSubjects } from "@/actions/subjects";
@@ -11,7 +11,8 @@ import { SubjectCrudModal } from "@/components/subjects/SubjectCrudModal";
 export default function DesacumuloPage() {
   const { user } = useAuth();
   const [entries, setEntries] = useState<any[]>([]);
-  const [newContent, setNewContent] = useState("");
+  const [mainTopic, setMainTopic] = useState("");
+  const [subTopics, setSubTopics] = useState<string[]>([""]);
   const [selectedSubject, setSelectedSubject] = useState("Geral");
   const [filterSubject, setFilterSubject] = useState("Geral");
   const [loading, setLoading] = useState(true);
@@ -45,16 +46,34 @@ export default function DesacumuloPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!newContent.trim() || submitting) return;
+    if (!mainTopic.trim() || submitting) return;
+
+    // Formatar como bullet points: o primeiro é o principal, os outros são sub-itens
+    const formattedContent = `- ${mainTopic}\n${subTopics
+      .filter(t => t.trim())
+      .map(t => `  - ${t}`)
+      .join("\n")}`;
 
     setSubmitting(true);
-    const res = await addDesacumuloEntry(newContent, selectedSubject);
+    const res = await addDesacumuloEntry(formattedContent, selectedSubject);
     if (res.success) {
-      setNewContent("");
+      setMainTopic("");
+      setSubTopics([""]);
       await loadFeed();
     }
     setSubmitting(false);
   }
+
+  const addSubTopic = () => setSubTopics([...subTopics, ""]);
+  const removeSubTopic = (index: number) => {
+    const newSubTopics = subTopics.filter((_, i) => i !== index);
+    setSubTopics(newSubTopics.length > 0 ? newSubTopics : [""]);
+  };
+  const updateSubTopic = (index: number, value: string) => {
+    const newSubTopics = [...subTopics];
+    newSubTopics[index] = value;
+    setSubTopics(newSubTopics);
+  };
 
   async function handleDelete(id: string) {
     if (!confirm("Tem certeza que deseja excluir esta explicação?")) return;
@@ -120,19 +139,55 @@ export default function DesacumuloPage() {
             ))}
           </div>
 
-          <textarea
-            value={newContent}
-            onChange={(e) => setNewContent(e.target.value)}
-            placeholder={`O que vimos em ${selectedSubject === "Geral" ? "aula" : selectedSubject} hoje? (A IA transformará tudo em bullet points técnicos)`}
-            className="w-full h-32 bg-transparent border-none outline-none text-lg md:text-xl font-medium text-foreground placeholder:text-foreground/20 resize-none"
-          />
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 bg-foreground/5 rounded-2xl p-4 border border-foreground/5 group-focus-within:border-primary-500/50 transition">
+              <div className="w-2 h-2 rounded-full bg-primary-600 shrink-0" />
+              <input 
+                value={mainTopic}
+                onChange={(e) => setMainTopic(e.target.value)}
+                placeholder="Assunto Principal da Aula"
+                className="w-full bg-transparent border-none outline-none text-xl font-bold text-foreground placeholder:text-foreground/20"
+              />
+            </div>
+
+            <div className="space-y-3 pl-6">
+              {subTopics.map((topic, index) => (
+                <div key={index} className="flex items-center gap-3 bg-foreground/[0.02] rounded-xl px-4 py-2 border border-foreground/5 group-focus-within:border-primary-500/30 transition">
+                  <div className="w-1.5 h-1.5 rounded-full bg-foreground/20 shrink-0" />
+                  <input 
+                    value={topic}
+                    onChange={(e) => updateSubTopic(index, e.target.value)}
+                    placeholder="Detalhe ou subtópico..."
+                    className="w-full bg-transparent border-none outline-none text-sm text-foreground placeholder:text-foreground/10"
+                  />
+                  {subTopics.length > 1 && (
+                    <button 
+                      type="button" 
+                      onClick={() => removeSubTopic(index)}
+                      className="p-1 rounded-md text-foreground/20 hover:text-danger-500 hover:bg-danger-500/10 transition"
+                    >
+                      <CloseIcon className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              
+              <button
+                type="button"
+                onClick={addSubTopic}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-foreground/10 text-foreground/40 hover:text-primary-600 hover:border-primary-600/50 hover:bg-primary-500/5 transition text-xs font-bold"
+              >
+                <Plus className="w-4 h-4" /> Adicionar Tópico
+              </button>
+            </div>
+          </div>
           
           <div className="flex items-center justify-between border-t border-foreground/5 pt-6">
             <div className="flex items-center gap-2 text-primary-600/60 text-xs font-black uppercase tracking-tighter">
-                <Sparkles className="w-4 h-4" /> Formatação Automática: Bullet Points
+                <Sparkles className="w-4 h-4" /> Digite em bullet points
             </div>
             <button
-              disabled={submitting || !newContent.trim()}
+              disabled={submitting || !mainTopic.trim()}
               className="px-8 py-4 rounded-2xl bg-primary-600 text-white font-bold hover:bg-primary-500 transition disabled:opacity-50 flex items-center gap-2 shadow-xl shadow-primary-600/20"
             >
               {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> Compartilhar</>}
