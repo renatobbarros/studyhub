@@ -24,17 +24,18 @@ export async function addDesacumuloEntry(content: string, subject: string = "Ger
       baseURL: "https://api.cerebras.ai/v1",
     });
 
-    const prompt = `Analise o seguinte conteúdo sobre a matéria "${subject}".
-Sua tarefa é retornar um JSON com a seguinte estrutura:
+    const prompt = `Analise o conteúdo acadêmico sobre a matéria "${subject}".
+Sua tarefa é retornar um JSON estritamente estruturado:
 {
-  "formattedContent": "O texto reescrito estritamente em formato de *bullet points*. A primeira linha com um '-' deve ser o assunto principal, e os bullet points indentados devem conter os subtópicos e detalhes importantes.",
-  "searchQueries": ["termo de busca 1", "termo de busca 2"] // Até 2 termos curtos muito específicos sobre os tópicos da aula, focados em encontrar videoaulas no YouTube
+  "formattedContent": "Apenas os conceitos-chave reescritos de forma telegráfica em bullet points. A primeira linha deve ser o conceito principal precedido de '- ', e os detalhes técnicos devem ser subtópicos indentados abaixo. REMOVA QUALQUER INTRODUÇÃO, SAUDAÇÃO OU EXPLICAÇÃO FORA DA LISTA.",
+  "searchQueries": ["assunto", "tópico específico"] // 2 termos de busca otimizados para YouTube
 }
-O 'formattedContent' NÃO DEVE conter introduções ou conclusões, apenas a lista em bullet points. Exemplo de formatação:
-- Assunto Principal
-  - Tópico menor associado
-  - Outro tópico com detalhes
-Retorne APENAS JSON válido.`;
+ESTRITAMENTE PROIBIDO: Texto livre, parágrafos longos, conversa com o usuário. Somente a hierarquia de tópicos.
+Exemplo:
+- Equações Diferenciais
+  - Método de separação de variáveis
+  - Condições de contorno de Dirichlet
+Retorne APENAS o JSON.`;
 
     try {
       const response = await client.chat.completions.create({

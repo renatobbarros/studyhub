@@ -67,16 +67,15 @@ export default function DesacumuloPage() {
   // Função para formatar o conteúdo em bullet points se houver quebras de linha ou houver sido solicitado
   const renderContent = (content: string) => {
     const lines = content.split('\n').filter(line => line.trim() !== '');
-    if (lines.length > 1) {
-      return (
-        <ul className="list-disc list-inside space-y-1">
-          {lines.map((line, i) => (
-            <li key={i} className="text-foreground/80 leading-relaxed">{line.replace(/^[•\-\*]\s*/, '')}</li>
-          ))}
-        </ul>
-      );
-    }
-    return <p className="text-foreground/80 leading-relaxed">{content}</p>;
+    return (
+      <ul className="list-disc list-inside space-y-1">
+        {lines.map((line, i) => (
+          <li key={i} className="text-foreground/80 leading-relaxed text-sm md:text-base">
+            {line.replace(/^[•\-\*]\s*/, '')}
+          </li>
+        ))}
+      </ul>
+    );
   };
 
   return (
@@ -124,13 +123,13 @@ export default function DesacumuloPage() {
           <textarea
             value={newContent}
             onChange={(e) => setNewContent(e.target.value)}
-            placeholder={`O que vimos em ${selectedSubject === "Geral" ? "aula" : selectedSubject} hoje? Use várias linhas para bullet points.`}
-            className="w-full h-32 bg-transparent border-none outline-none text-xl font-medium text-foreground placeholder:text-foreground/20 resize-none"
+            placeholder={`O que vimos em ${selectedSubject === "Geral" ? "aula" : selectedSubject} hoje? (A IA transformará tudo em bullet points técnicos)`}
+            className="w-full h-32 bg-transparent border-none outline-none text-lg md:text-xl font-medium text-foreground placeholder:text-foreground/20 resize-none"
           />
           
           <div className="flex items-center justify-between border-t border-foreground/5 pt-6">
-            <div className="flex items-center gap-2 text-primary-600/60 text-sm font-bold">
-                <Sparkles className="w-4 h-4" /> IA configurada para {selectedSubject}
+            <div className="flex items-center gap-2 text-primary-600/60 text-xs font-black uppercase tracking-tighter">
+                <Sparkles className="w-4 h-4" /> Formatação Automática: Bullet Points
             </div>
             <button
               disabled={submitting || !newContent.trim()}
