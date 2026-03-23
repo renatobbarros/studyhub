@@ -88,11 +88,20 @@ export default function DesacumuloPage() {
     const lines = content.split('\n').filter(line => line.trim() !== '');
     return (
       <ul className="list-disc list-inside space-y-1">
-        {lines.map((line, i) => (
-          <li key={i} className="text-foreground/80 leading-relaxed text-sm md:text-base">
-            {line.replace(/^[•\-\*]\s*/, '')}
-          </li>
-        ))}
+        {lines.map((line, i) => {
+          const isSubItem = line.startsWith('  ');
+          return (
+            <li 
+              key={i} 
+              className={cn(
+                "text-foreground/80 leading-relaxed text-sm md:text-base",
+                isSubItem && "ml-4 list-[circle]"
+              )}
+            >
+              {line.trim().replace(/^[•\-\*]\s*/, '')}
+            </li>
+          );
+        })}
       </ul>
     );
   };
