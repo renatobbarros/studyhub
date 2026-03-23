@@ -47,7 +47,13 @@ export async function parseScheduleWithAI(text: string) {
   ];
 
   // Dynamically import admin for safety in edge environments
-  const { adminDb } = await import("@/lib/firebase/admin");
+  const { getAdminDb } = await import("@/lib/firebase/admin");
+  const adminDb = getAdminDb();
+
+  if (!adminDb) {
+    console.error("parseScheduleWithAI: adminDb não inicializado");
+    return { success: false, message: "Banco de dados não disponível." };
+  }
 
   // Batch creation of tasks
   const batch = adminDb.batch();
@@ -202,14 +208,18 @@ export async function getUserDifficulties() {
   const session = await verifyServerSession();
   if (!session) return { success: true, difficulties: [] };
 
-  const { adminDb } = await import("@/lib/firebase/admin");
+  const { getAdminDb } = await import("@/lib/firebase/admin");
+  const adminDb = getAdminDb();
   
-  // 1. Dificuldades manuais do perfil do usuário
+  if (!adminDb) {
+    console.error("getUserDifficulties: adminDb não inicializado");
+    return { success: true, difficulties: [] };
+  }
+
   const userSnap = await adminDb.collection("users").doc(session.uid).get();
   const manualDifficulties = userSnap.data()?.subjectDifficulties || [];
 
   // 2. Assuntos do Desacumulo marcados como NÃO dominados
-  // Buscamos os nomes únicos das matérias onde mastered é false
   const desacumuloSnap = await adminDb.collection("desacumulo")
     .where("userId", "==", session.uid)
     .where("mastered", "==", false)

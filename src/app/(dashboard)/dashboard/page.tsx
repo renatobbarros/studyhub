@@ -18,10 +18,28 @@ export default async function DashboardPage() {
     redirect("/sign-in");
   }
 
-  const userData = await syncUserProfile();
-  const stats = await getDashboardStats();
-  const criticalDates = await getCriticalDates();
-  const members = await getGuildMembers();
+  let userData = null;
+  let stats = null;
+  let criticalDates: any[] = [];
+  let members: any[] = [];
+
+  try {
+    // Carregamento paralelo das ações de servidor para performance
+    const [userRes, statsRes, datesRes, membersRes] = await Promise.allSettled([
+      syncUserProfile(),
+      getDashboardStats(),
+      getCriticalDates(),
+      getGuildMembers()
+    ]);
+
+    userData = userRes.status === 'fulfilled' ? userRes.value : null;
+    stats = statsRes.status === 'fulfilled' ? statsRes.value : null;
+    criticalDates = datesRes.status === 'fulfilled' ? (datesRes.value as any) : [];
+    members = membersRes.status === 'fulfilled' ? (membersRes.value as any) : [];
+
+  } catch (error) {
+    console.error("Erro ao carregar dados do dashboard:", error);
+  }
 
   return (
     <div className="pt-24 pb-12 space-y-12 max-w-7xl mx-auto">

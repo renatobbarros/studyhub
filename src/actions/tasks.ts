@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { getAdminDb } from "@/lib/firebase/admin";
 import { verifyServerSession } from "./auth";
 import { revalidatePath } from "next/cache";
 import { addXP } from "./gamification";
@@ -8,6 +8,12 @@ import { addXP } from "./gamification";
 export async function createTask(data: { title: string; description?: string; dueDate?: Date; subjectId?: string; status?: string }) {
   const decoded = await verifyServerSession();
   if (!decoded) throw new Error("Unauthorized");
+
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    console.error("createTask: adminDb não inicializado");
+    return { success: false, message: "Banco de dados indisponível." };
+  }
 
   const taskData = {
     title: data.title,
@@ -32,6 +38,12 @@ export async function deleteTask(taskId: string) {
   const decoded = await verifyServerSession();
   if (!decoded) throw new Error("Unauthorized");
 
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    console.error("deleteTask: adminDb não inicializado");
+    return { success: false, message: "Banco de dados indisponível." };
+  }
+
   const docRef = adminDb.collection("tasks").doc(taskId);
   const docSnap = await docRef.get();
   
@@ -49,6 +61,9 @@ export async function deleteTask(taskId: string) {
 export async function updateTaskStatus(taskId: string, status: string) {
   const decoded = await verifyServerSession();
   if (!decoded) throw new Error("Unauthorized");
+
+  const adminDb = getAdminDb();
+  if (!adminDb) return { success: false, message: "BD indisponível" };
 
   const docRef = adminDb.collection("tasks").doc(taskId);
   const docSnap = await docRef.get();
@@ -79,6 +94,9 @@ export async function updateTaskStatus(taskId: string, status: string) {
 export async function updateTask(taskId: string, updates: Partial<{ title: string; description: string; dueDate: Date | string; subjectId: string; status: string }>) {
   const decoded = await verifyServerSession();
   if (!decoded) throw new Error("Unauthorized");
+
+  const adminDb = getAdminDb();
+  if (!adminDb) return { success: false, message: "BD indisponível" };
 
   const docRef = adminDb.collection("tasks").doc(taskId);
   const docSnap = await docRef.get();

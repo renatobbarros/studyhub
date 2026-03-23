@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { getAdminDb } from "@/lib/firebase/admin";
 import { verifyServerSession } from "./auth";
 import { revalidatePath } from "next/cache";
 import { getReinforcementVideos } from "./study-plan";
@@ -75,6 +75,11 @@ Retorne APENAS um JSON no formato:
   }
 
   // 3. Salvar no Firestore
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    console.error("addDesacumuloEntry: adminDb não inicializado");
+    return { success: false, message: "Banco de dados indisponível." };
+  }
   const entryRef = adminDb.collection("desacumulo").doc();
   await entryRef.set({
     userId: decoded.uid,
@@ -103,6 +108,9 @@ export async function toggleMastered(id: string) {
   const session = await verifyServerSession();
   if (!session) throw new Error("Unauthorized");
 
+  const adminDb = getAdminDb();
+  if (!adminDb) return { success: false, message: "Banco de dados indisponível." };
+
   const docRef = adminDb.collection("desacumulo").doc(id);
   const docSnap = await docRef.get();
 
@@ -124,6 +132,12 @@ export async function toggleMastered(id: string) {
 export async function getDesacumuloFeed(subject?: string) {
   const session = await verifyServerSession();
   if (!session) return { success: true, entries: [] };
+
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    console.error("getDesacumuloFeed: adminDb não inicializado");
+    return { success: true, entries: [] };
+  }
 
   let query = adminDb.collection("desacumulo").orderBy("createdAt", "desc");
   
@@ -149,6 +163,9 @@ export async function deleteDesacumuloEntry(id: string) {
   if (!decoded) throw new Error("Unauthorized");
 
   try {
+    const adminDb = getAdminDb();
+    if (!adminDb) return { success: false, error: "BD indisponível" };
+
     const docRef = adminDb.collection("desacumulo").doc(id);
     const doc = await docRef.get();
     

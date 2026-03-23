@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { getAdminDb } from "@/lib/firebase/admin";
 import { verifyServerSession } from "./auth";
 import { revalidatePath } from "next/cache";
 import { XP_PER_LEVEL } from "@/lib/gamification-utils";
@@ -11,6 +11,12 @@ import { XP_PER_LEVEL } from "@/lib/gamification-utils";
 export async function addXP(amount: number) {
   const decoded = await verifyServerSession();
   if (!decoded) throw new Error("Unauthorized");
+
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    console.error("addXP: adminDb não inicializado");
+    return { success: false, message: "Banco de dados indisponível." };
+  }
 
   const userRef = adminDb.collection("users").doc(decoded.uid);
   const userSnap = await userRef.get();
@@ -59,6 +65,9 @@ export async function saveFocusSession(minutes: number) {
   if (!decoded) throw new Error("Unauthorized");
 
   const now = new Date();
+  const adminDb = getAdminDb();
+  if (!adminDb) return { success: false, message: "BD indisponível" };
+  
   const sessionRef = adminDb.collection("focus_sessions").doc();
   
   await sessionRef.set({
@@ -80,6 +89,12 @@ export async function saveFocusSession(minutes: number) {
 export async function completeTask(taskId: string) {
   const decoded = await verifyServerSession();
   if (!decoded) throw new Error("Unauthorized");
+
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    console.error("completeTask: adminDb não inicializado");
+    return { success: false, message: "Banco de dados indisponível." };
+  }
 
   const taskRef = adminDb.collection("tasks").doc(taskId);
   const taskSnap = await taskRef.get();
@@ -111,6 +126,12 @@ export async function completeTask(taskId: string) {
 export async function toggleSubjectDifficulty(subject: string) {
   const decoded = await verifyServerSession();
   if (!decoded) throw new Error("Unauthorized");
+
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    console.error("toggleSubjectDifficulty: adminDb não inicializado");
+    return { success: false, message: "Banco de dados indisponível." };
+  }
 
   const userRef = adminDb.collection("users").doc(decoded.uid);
   const userSnap = await userRef.get();

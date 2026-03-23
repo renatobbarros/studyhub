@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { getAdminDb } from "@/lib/firebase/admin";
 import { verifyServerSession } from "./auth";
 import { startOfWeek, endOfWeek, startOfDay } from "date-fns";
 import { getLevelInfo } from "@/lib/gamification-utils";
@@ -8,6 +8,9 @@ import { getLevelInfo } from "@/lib/gamification-utils";
 export async function getDashboardStats() {
   const session = await verifyServerSession();
   if (!session) return null;
+
+  const adminDb = getAdminDb();
+  if (!adminDb) return null;
 
   try {
     const userDoc = await adminDb.collection("users").doc(session.uid).get();
@@ -83,6 +86,9 @@ export async function getDashboardStats() {
 export async function getCriticalDates() {
   const session = await verifyServerSession();
   if (!session) return [];
+
+  const adminDb = getAdminDb();
+  if (!adminDb) return [];
 
   try {
     // Buscamos tarefas não concluídas com data de entrega futura, limitando às 4 mais próximas

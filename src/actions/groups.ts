@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { getAdminDb } from "@/lib/firebase/admin";
 import { verifyServerSession } from "./auth";
 import { revalidatePath } from "next/cache";
 import { FieldValue } from "firebase-admin/firestore";
@@ -11,6 +11,12 @@ import { FieldValue } from "firebase-admin/firestore";
 export async function createGroup(data: { name: string; classId?: string }) {
   const decoded = await verifyServerSession();
   if (!decoded) throw new Error("Unauthorized");
+
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    console.error("createGroup: adminDb não inicializado");
+    return { success: false, message: "Banco de dados indisponível." };
+  }
 
   const newGroupRef = adminDb.collection("groups").doc();
 
@@ -35,6 +41,12 @@ export async function createGroup(data: { name: string; classId?: string }) {
 export async function joinGroup(groupId: string) {
   const decoded = await verifyServerSession();
   if (!decoded) throw new Error("Unauthorized");
+
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    console.error("joinGroup: adminDb não inicializado");
+    return { success: false, message: "Banco de dados indisponível." };
+  }
 
   const groupRef = adminDb.collection("groups").doc(groupId);
   const groupSnap = await groupRef.get();

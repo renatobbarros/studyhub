@@ -1,12 +1,18 @@
 "use server";
 
-import { adminAuth, adminDb } from "@/lib/firebase/admin";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { cookies } from "next/headers";
 import { isYesterday, isToday, startOfDay } from "date-fns";
 
 export async function createSessionCookie(idToken: string) {
   try {
     const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
+    
+    const adminAuth = getAdminAuth();
+    if (!adminAuth) {
+      throw new Error("Firebase Admin Auth não inicializado. Verifique as variáveis de ambiente.");
+    }
+
     const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
     const cookieStore = await cookies();
     
@@ -40,6 +46,12 @@ export async function verifyServerSession() {
 
   if (!sessionCookie) return null;
 
+  const adminAuth = getAdminAuth();
+  if (!adminAuth) {
+    console.error("verifyServerSession: adminAuth não inicializado");
+    return null;
+  }
+
   try {
     const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
     return decodedClaims;
@@ -51,6 +63,12 @@ export async function verifyServerSession() {
 export async function syncUserProfile() {
   const decoded = await verifyServerSession();
   if (!decoded) return null;
+
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    console.error("syncUserProfile: adminDb não inicializado");
+    return null;
+  }
 
   try {
     const userRef = adminDb.collection("users").doc(decoded.uid);
@@ -77,13 +95,11 @@ export async function syncUserProfile() {
     
     let newStreak = userData.streak || 0;
     
-    // Fallback caso a data salva não possa ser parseada por isYesterday/isToday
     try {
       if (lastActive) {
         if (isYesterday(lastActive)) {
           newStreak += 1;
         } else if (!isToday(lastActive)) {
-          // Se não é hoje nem ontem, quebrou a streak
           newStreak = 1;
         }
       } else {
@@ -94,7 +110,6 @@ export async function syncUserProfile() {
       newStreak = 1;
     }
 
-    // Update last active and streak
     const updates: any = { 
       lastActiveAt: now.toISOString(),
       streak: newStreak
@@ -105,7 +120,6 @@ export async function syncUserProfile() {
     return { ...userData, ...updates };
   } catch (error) {
     console.error("Critical error syncing user profile on Server", error);
-    // Retorna fallback pacífico para que a UI continue renderizando sem travar a página
     return {
       name: decoded.name || "Estudante",
       email: decoded.email,
@@ -120,6 +134,9 @@ export async function syncUserProfile() {
 export async function getGuildMembers() {
   const session = await verifyServerSession();
   if (!session) return [];
+
+  const adminDb = getAdminDb();
+  if (!adminDb) return [];
 
   try {
     const snapshot = await adminDb.collection("users").orderBy("xp", "desc").limit(10).get();

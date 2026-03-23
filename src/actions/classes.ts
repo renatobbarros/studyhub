@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { getAdminDb } from "@/lib/firebase/admin";
 import { verifyServerSession } from "./auth";
 import { revalidatePath } from "next/cache";
 
@@ -14,6 +14,12 @@ function generateInviteCode() {
 export async function createClass(data: { name: string; university: string; semester: string }) {
   const decoded = await verifyServerSession();
   if (!decoded) throw new Error("Unauthorized");
+
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    console.error("createClass: adminDb não inicializado");
+    return { success: false, message: "Banco de dados indisponível." };
+  }
 
   const newClassRef = adminDb.collection("classes").doc();
   const inviteCode = generateInviteCode();
@@ -43,6 +49,12 @@ export async function createClass(data: { name: string; university: string; seme
 export async function joinClass(code: string) {
   const decoded = await verifyServerSession();
   if (!decoded) throw new Error("Unauthorized");
+
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    console.error("joinClass: adminDb não inicializado");
+    return { success: false, message: "Banco de dados indisponível." };
+  }
 
   // Buscar classe pelo código
   const classSnapshot = await adminDb.collection("classes").where("code", "==", code).limit(1).get();
