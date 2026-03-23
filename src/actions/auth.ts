@@ -52,50 +52,69 @@ export async function syncUserProfile() {
   const decoded = await verifyServerSession();
   if (!decoded) return null;
 
-  const userRef = adminDb.collection("users").doc(decoded.uid);
-  const userSnap = await userRef.get();
+  try {
+    const userRef = adminDb.collection("users").doc(decoded.uid);
+    const userSnap = await userRef.get();
 
-  if (!userSnap.exists) {
-    const newUser = {
+    if (!userSnap.exists) {
+      const newUser = {
+        name: decoded.name || "Estudante",
+        email: decoded.email,
+        avatar: decoded.picture || null,
+        xp: 0,
+        level: 1,
+        streak: 0,
+        lastActiveAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+      };
+      await userRef.set(newUser);
+      return newUser;
+    }
+
+    const userData = userSnap.data()!;
+    const lastActive = userData.lastActiveAt ? new Date(userData.lastActiveAt) : null;
+    const now = new Date();
+    
+    let newStreak = userData.streak || 0;
+    
+    // Fallback caso a data salva não possa ser parseada por isYesterday/isToday
+    try {
+      if (lastActive) {
+        if (isYesterday(lastActive)) {
+          newStreak += 1;
+        } else if (!isToday(lastActive)) {
+          // Se não é hoje nem ontem, quebrou a streak
+          newStreak = 1;
+        }
+      } else {
+        newStreak = 1;
+      }
+    } catch (dateError) {
+      console.warn("Invalid date format in user data, resetting streak", dateError);
+      newStreak = 1;
+    }
+
+    // Update last active and streak
+    const updates: any = { 
+      lastActiveAt: now.toISOString(),
+      streak: newStreak
+    };
+    
+    await userRef.update(updates);
+    
+    return { ...userData, ...updates };
+  } catch (error) {
+    console.error("Critical error syncing user profile on Server", error);
+    // Retorna fallback pacífico para que a UI continue renderizando sem travar a página
+    return {
       name: decoded.name || "Estudante",
       email: decoded.email,
       avatar: decoded.picture || null,
       xp: 0,
       level: 1,
       streak: 0,
-      lastActiveAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
     };
-    await userRef.set(newUser);
-    return newUser;
   }
-
-  const userData = userSnap.data()!;
-  const lastActive = userData.lastActiveAt ? new Date(userData.lastActiveAt) : null;
-  const now = new Date();
-  
-  let newStreak = userData.streak || 0;
-  
-  if (lastActive) {
-    if (isYesterday(lastActive)) {
-      newStreak += 1;
-    } else if (!isToday(lastActive)) {
-      // Se não é hoje nem ontem, quebrou a streak
-      newStreak = 1;
-    }
-  } else {
-    newStreak = 1;
-  }
-
-  // Update last active and streak
-  const updates: any = { 
-    lastActiveAt: now.toISOString(),
-    streak: newStreak
-  };
-  
-  await userRef.update(updates);
-  
-  return { ...userData, ...updates };
 }
 
 export async function getGuildMembers() {

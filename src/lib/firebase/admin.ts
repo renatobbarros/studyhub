@@ -10,9 +10,24 @@ function getFirebaseAdmin() {
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   
   const rawKey = process.env.FIREBASE_PRIVATE_KEY;
-  const privateKey = rawKey 
-    ? rawKey.replace(/^"(.*)"$/, '$1').replace(/\\n/g, '\n')
-    : undefined;
+  let privateKey = rawKey;
+  
+  if (privateKey) {
+    // Tenta interpretar como JSON caso o Vercel tenha escapado com aspas duplas,
+    // o que também já resolve o replace de \n.
+    try {
+      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        privateKey = JSON.parse(privateKey);
+      }
+    } catch (e) {
+      // Ignora erro de parse, continua para o replace manual
+    }
+    
+    // Garante que os literais \n (texto) virem quebras de linha reais
+    if (typeof privateKey === 'string') {
+      privateKey = privateKey.replace(/\\n/g, '\n');
+    }
+  }
 
   // No build do Vercel, as variáveis de ambiente sensíveis muitas vezes não estão disponíveis.
   // Retornamos null para que os proxies abaixo forneçam mocks básicos e não quebrem o build.
