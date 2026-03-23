@@ -15,13 +15,15 @@ export default function AddTaskModal({ isOpen, onClose, subjects }: AddTaskModal
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [subjectId, setSubjectId] = useState(subjects[0]?.id || "");
+  const [subjectId, setSubjectId] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Sync subjectId if subjects load late
-  useState(() => {
-    if (!subjectId && subjects.length > 0) setSubjectId(subjects[0].id);
-  });
+  // Sync subjectId when subjects load
+  useEffect(() => {
+    if ((!subjectId || subjectId === "") && subjects.length > 0) {
+      setSubjectId(subjects[0].id);
+    }
+  }, [subjects, subjectId]);
 
   if (!isOpen) return null;
 

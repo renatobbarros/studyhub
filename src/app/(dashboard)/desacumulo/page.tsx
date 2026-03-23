@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Send, Zap, User, Video, ExternalLink, Loader2, Sparkles, Trash2, Filter, Pencil, Plus, X as CloseIcon } from "lucide-react";
-import { addDesacumuloEntry, getDesacumuloFeed, deleteDesacumuloEntry } from "@/actions/desacumulo";
+import { Send, Zap, User, Video, ExternalLink, Loader2, Sparkles, Trash2, Filter, Pencil, Plus, X as CloseIcon, CheckSquare, Square } from "lucide-react";
+import { addDesacumuloEntry, getDesacumuloFeed, deleteDesacumuloEntry, toggleMastered } from "@/actions/desacumulo";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { getSubjects } from "@/actions/subjects";
 import type { Subject } from "@/actions/subjects";
@@ -10,6 +10,7 @@ import { SubjectCrudModal } from "@/components/subjects/SubjectCrudModal";
 
 export default function DesacumuloPage() {
   const { user } = useAuth();
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [entries, setEntries] = useState<any[]>([]);
   const [mainTopic, setMainTopic] = useState("");
   const [subTopics, setSubTopics] = useState<string[]>([""]);
@@ -29,7 +30,12 @@ export default function DesacumuloPage() {
 
   useEffect(() => {
     loadSubjects();
-  }, []);
+    if (user) {
+      import("@/actions/auth").then(({ syncUserProfile }) => {
+        syncUserProfile().then(profile => setUserProfile(profile));
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     loadFeed();
@@ -80,6 +86,15 @@ export default function DesacumuloPage() {
     const res = await deleteDesacumuloEntry(id);
     if (res.success) {
       await loadFeed();
+    }
+  }
+
+  async function handleToggleMastered(id: string) {
+    // Atualização otimista
+    setEntries(prev => prev.map(e => e.id === id ? { ...e, mastered: !e.mastered } : e));
+    const res = await toggleMastered(id);
+    if (!res.success) {
+      await loadFeed(); // Rollback se der erro
     }
   }
 
@@ -273,7 +288,7 @@ export default function DesacumuloPage() {
                           <span className="text-[10px] font-black text-foreground/30 uppercase tracking-widest">
                               {new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
-                          {user?.uid === entry.userId && (
+                          {(user?.uid === entry.userId || userProfile?.isAdmin) && (
                             <button 
                               onClick={() => handleDelete(entry.id)}
                               className="p-2 rounded-lg text-danger-500/40 hover:text-danger-500 hover:bg-danger-500/10 transition"

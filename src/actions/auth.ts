@@ -2,6 +2,7 @@
 
 import { adminAuth, adminDb } from "@/lib/firebase/admin";
 import { cookies } from "next/headers";
+import { isYesterday, isToday, startOfDay } from "date-fns";
 
 export async function createSessionCookie(idToken: string) {
   try {
@@ -69,11 +70,32 @@ export async function syncUserProfile() {
     return newUser;
   }
 
-  const userData = userSnap.data();
-  // Update last active
-  await userRef.update({ lastActiveAt: new Date().toISOString() });
+  const userData = userSnap.data()!;
+  const lastActive = userData.lastActiveAt ? new Date(userData.lastActiveAt) : null;
+  const now = new Date();
   
-  return userData;
+  let newStreak = userData.streak || 0;
+  
+  if (lastActive) {
+    if (isYesterday(lastActive)) {
+      newStreak += 1;
+    } else if (!isToday(lastActive)) {
+      // Se não é hoje nem ontem, quebrou a streak
+      newStreak = 1;
+    }
+  } else {
+    newStreak = 1;
+  }
+
+  // Update last active and streak
+  const updates: any = { 
+    lastActiveAt: now.toISOString(),
+    streak: newStreak
+  };
+  
+  await userRef.update(updates);
+  
+  return { ...userData, ...updates };
 }
 
 export async function getGuildMembers() {

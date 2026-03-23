@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Play, Pause, RotateCcw, Coffee, BookOpen, Trophy, Zap, Sparkles } from "lucide-react";
-import { addXP } from "@/actions/gamification";
+import { addXP, saveFocusSession } from "@/actions/gamification";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -39,9 +39,9 @@ export default function TimerPage() {
     if (mode === "work") {
       setSessionsCompleted(prev => prev + 1);
       try {
-        await addXP(25);
+        await saveFocusSession(25);
       } catch (e) {
-        console.error("Erro ao adicionar XP:", e);
+        console.error("Erro ao salvar sessão de foco:", e);
       }
       setMode("break");
       setMinutes(5);

@@ -3,6 +3,7 @@
 import { adminDb } from "@/lib/firebase/admin";
 import { verifyServerSession } from "./auth";
 import { revalidatePath } from "next/cache";
+import { addXP } from "./gamification";
 
 export async function createTask(data: { title: string; description?: string; dueDate?: Date; subjectId?: string; status?: string }) {
   const decoded = await verifyServerSession();
@@ -56,12 +57,19 @@ export async function updateTaskStatus(taskId: string, status: string) {
     throw new Error("Unauthorized or not found");
   }
 
+  const oldStatus = docSnap.data()?.status;
   const completed = status === "done";
+  
   await docRef.update({ 
     status, 
     completed,
     updatedAt: new Date().toISOString() 
   });
+
+  // Se foi recém concluída, ganha XP
+  if (completed && oldStatus !== "done") {
+    await addXP(docSnap.data()?.xpReward || 10);
+  }
 
   revalidatePath("/calendar");
   revalidatePath("/dashboard");
@@ -91,7 +99,13 @@ export async function updateTask(taskId: string, updates: Partial<{ title: strin
     updateData.completed = updates.status === "done";
   }
 
+  const oldStatus = docSnap.data()?.status;
   await docRef.update(updateData);
+
+  // Se o status mudou para 'done', ganha XP
+  if (updateData.status === "done" && oldStatus !== "done") {
+    await addXP(docSnap.data()?.xpReward || 10);
+  }
 
   revalidatePath("/calendar");
   revalidatePath("/dashboard");

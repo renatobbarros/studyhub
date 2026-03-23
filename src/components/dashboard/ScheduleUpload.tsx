@@ -1,33 +1,56 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, Sparkles, FileText, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
-import { parseScheduleWithAI } from "@/actions/study-plan";
+import { Upload, Sparkles, FileText, CheckCircle2, Loader2, AlertCircle, FileUp, X as RemoveIcon } from "lucide-react";
+import { parseScheduleWithAI, parseSchedulePDF } from "@/actions/study-plan";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export default function ScheduleUpload() {
   const [isOpen, setIsOpen] = useState(false);
   const [text, setText] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleProcess = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() && !file) return;
     setLoading(true);
+    setError(null);
     try {
-      const result = await parseScheduleWithAI(text);
+      let result;
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        result = await parseSchedulePDF(formData);
+      } else {
+        result = await parseScheduleWithAI(text);
+      }
+
       if (result.success) {
         setSuccess(true);
         setText("");
+        setFile(null);
         setTimeout(() => {
           setSuccess(false);
           setIsOpen(false);
         }, 3000);
+      } else {
+        setError(result.message || "Ocorreu um erro ao processar.");
       }
-    } catch (error) {
-       console.error(error);
+    } catch (err: any) {
+       console.error(err);
+       setError("Erro de rede ou falha no servidor.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+      setText(""); // Limpa o texto se subir arquivo
     }
   };
 
@@ -84,17 +107,58 @@ export default function ScheduleUpload() {
                 </div>
               ) : (
                 <div className="space-y-4">
+                  {/* Option 1: PDF Upload (New) */}
+                  <div className="relative group">
+                    <label className={cn(
+                      "flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-all",
+                      file ? "border-primary-500 bg-primary-500/5" : "border-foreground/10 hover:border-primary-500/30 bg-foreground/[0.02]"
+                    )}>
+                      {file ? (
+                        <div className="flex flex-col items-center text-primary-600">
+                          <CheckCircle2 className="w-8 h-8 mb-2" />
+                          <span className="text-sm font-bold truncate max-w-[200px]">{file.name}</span>
+                          <button 
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setFile(null); }}
+                            className="mt-2 text-[10px] font-black uppercase text-foreground/40 hover:text-danger-500"
+                          >
+                            Remover Arquivo
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center text-foreground/40">
+                          <FileUp className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform" />
+                          <span className="text-sm font-bold">Subir Cronograma (PDF)</span>
+                          <span className="text-[10px] uppercase font-black tracking-tighter mt-1">Recomendado</span>
+                        </div>
+                      )}
+                      <input type="file" className="hidden" accept=".pdf" onChange={handleFileChange} />
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="h-px flex-1 bg-foreground/5" />
+                    <span className="text-[10px] font-black text-foreground/20 uppercase tracking-widest">OU COLD TEXT</span>
+                    <div className="h-px flex-1 bg-foreground/5" />
+                  </div>
+
                   <div className="relative">
                     <textarea 
                       value={text}
-                      onChange={(e) => setText(e.target.value)}
+                      onChange={(e) => { setText(e.target.value); if(e.target.value) setFile(null); }}
                       placeholder="Cole aqui o texto do cronograma, datas de provas ou e-mails dos professores..."
-                      className="w-full h-48 bg-foreground/5 border-none rounded-2xl p-4 text-foreground placeholder:text-foreground/30 focus:ring-2 focus:ring-primary-500 transition resize-none"
+                      className="w-full h-32 bg-foreground/5 border-none rounded-2xl p-4 text-foreground placeholder:text-foreground/30 focus:ring-2 focus:ring-primary-500 transition resize-none"
                     />
                     <div className="absolute bottom-4 right-4 flex items-center gap-2 text-[10px] text-foreground/30 font-bold uppercase tracking-widest">
                        Powered by Gemini <Sparkles className="w-3 h-3" />
                     </div>
                   </div>
+
+                  {error && (
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-danger-500/10 border border-danger-500/20 text-xs text-danger-600">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      {error}
+                    </div>
+                  )}
 
                   <div className="flex items-center gap-2 p-3 rounded-xl bg-primary-500/5 border border-primary-500/10 text-xs text-primary-700">
                     <AlertCircle className="w-4 h-4 shrink-0" />
@@ -103,7 +167,7 @@ export default function ScheduleUpload() {
 
                   <button 
                     onClick={handleProcess}
-                    disabled={loading || !text.trim()}
+                    disabled={loading || (!text.trim() && !file)}
                     className="w-full bg-primary-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 hover:bg-primary-500 transition disabled:opacity-50"
                   >
                     {loading ? (

@@ -15,7 +15,9 @@ export async function addDesacumuloEntry(content: string, subject: string = "Ger
 
   // 1. Extrair informações e formatar conteúdo usando Cerebras
   const apiKey = process.env.CEREBRAS_API_KEY;
-  let keywords = [subject, content.split(" ")[0]].filter(Boolean); // Fallback
+  // Melhoria do fallback: pega o primeiro bullet point se a IA falhar
+  const firstLine = content.split("\n")[0].replace(/^[•\-\*]\s*/, "").trim();
+  let keywords = [subject !== "Geral" ? subject : null, firstLine].filter(Boolean) as string[]; 
   let formattedContent = content; // Fallback
 
   if (apiKey) {
@@ -24,12 +26,19 @@ export async function addDesacumuloEntry(content: string, subject: string = "Ger
       baseURL: "https://api.cerebras.ai/v1",
     });
 
-    const prompt = `Analise a lista de tópicos sobre a matéria "${subject}".
-Sua tarefa é retornar um JSON com termos de busca para o YouTube:
+    const prompt = `Analise a lista de tópicos acadêmicos abaixo.
+Sua tarefa é extrair 2 termos de busca extremamente específicos e técnicos para o YouTube.
+Se a matéria (subject) for "Geral", ignore-a e foque 100% nos tópicos listados no conteúdo.
+Se a matéria for específica (ex: Cálculo, Direito), use-a como contexto.
+
+O objetivo é encontrar videoaulas que expliquem exatamente o que foi listado.
+Exemplo de entrada: "introdução a sistemas de informação - que elementos formam o SI"
+Exemplo de saída: "elementos que compõem sistemas de informação aula", "o que é SI componentes explicação"
+
+Retorne APENAS um JSON no formato:
 {
-  "searchQueries": ["termo de busca 1", "termo de busca 2"] // 2 termos curtos e muito específicos focado em encontrar videoaulas no YouTube sobre os tópicos listados.
-}
-Retorne APENAS o JSON.`;
+  "searchQueries": ["termo 1", "termo 2"]
+}`;
 
     try {
       const response = await client.chat.completions.create({
@@ -68,13 +77,14 @@ Retorne APENAS o JSON.`;
   // 3. Salvar no Firestore
   const entryRef = adminDb.collection("desacumulo").doc();
   await entryRef.set({
-    content: formattedContent,
-    subject,
-    userName: decoded.name || "Estudante",
     userId: decoded.uid,
+    userName: decoded.name || "Estudante",
     avatar: decoded.picture || null,
+    subject,
+    content: formattedContent,
     keywords,
     videos: allVideos.slice(0, 4), // Top 4 vídeos
+    mastered: false, // Novo: campo para feedback de domínio
     createdAt: new Date().toISOString(),
   });
 
@@ -83,6 +93,28 @@ Retorne APENAS o JSON.`;
   await addXP(25);
 
   revalidatePath("/desacumulo");
+  return { success: true };
+}
+
+/**
+ * Alterna o status de domínio de um tópico
+ */
+export async function toggleMastered(id: string) {
+  const session = await verifyServerSession();
+  if (!session) throw new Error("Unauthorized");
+
+  const docRef = adminDb.collection("desacumulo").doc(id);
+  const docSnap = await docRef.get();
+
+  if (!docSnap.exists || docSnap.data()?.userId !== session.uid) {
+    throw new Error("Não autorizado ou registro não existe");
+  }
+
+  const currentStatus = docSnap.data()?.mastered || false;
+  await docRef.update({ mastered: !currentStatus });
+
+  revalidatePath("/desacumulo");
+  revalidatePath("/dashboard");
   return { success: true };
 }
 
@@ -121,7 +153,14 @@ export async function deleteDesacumuloEntry(id: string) {
     const doc = await docRef.get();
     
     if (!doc.exists) return { success: false, error: "Post não encontrado" };
-    if (doc.data()?.userId !== decoded.uid) return { success: false, error: "Sem permissão" };
+
+    // Verificar se é o dono ou se é admin
+    const userSnap = await adminDb.collection("users").doc(decoded.uid).get();
+    const isAdmin = userSnap.data()?.isAdmin === true;
+
+    if (doc.data()?.userId !== decoded.uid && !isAdmin) {
+      return { success: false, error: "Sem permissão" };
+    }
 
     await docRef.delete();
     revalidatePath("/desacumulo");

@@ -8,6 +8,8 @@ import ScheduleUpload from "@/components/dashboard/ScheduleUpload";
 import ReinforcementSection from "@/components/dashboard/ReinforcementSection";
 import DifficultyToggle from "@/components/dashboard/DifficultyToggle";
 import { Trophy, Clock, Flame, CheckCircle2, Star, Target, Users, Zap, Calendar as CalendarIcon, Brain } from "lucide-react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const session = await verifyServerSession();
@@ -26,7 +28,7 @@ export default async function DashboardPage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-primary-900 to-indigo-950 p-10 md:p-16 text-white shadow-2xl">
          <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-primary-500/20 to-transparent blur-3xl pointer-events-none" />
-         <div className="relative z-10 max-w-2xl space-y-4">
+          <div className="relative z-10 max-w-2xl space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-widest text-primary-300">
                <Zap className="w-3 h-3" /> Dashboard do Grupo
             </div>
@@ -34,10 +36,25 @@ export default async function DashboardPage() {
               Olá, {userData?.name?.split(' ')[0] || "Estudante"}!
             </h1>
             <p className="text-xl text-white/60 leading-relaxed">
-              Sua guilda está com <span className="text-white font-bold">{stats?.productivity || 0}% de produtividade</span> hoje. 
-              Continue assim para manter o topo do ranking!
+              Você tem <span className="text-white font-bold">{stats?.pendingThisWeek || 0} pendências</span> para essa semana. 
+              Mantenha o foco para subir de nível!
             </p>
-         </div>
+
+            {/* Level Progress Bar */}
+            <div className="mt-8 space-y-2 max-w-sm">
+              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+                <span className="text-primary-300">{stats?.levelTitle || "Novato"}</span>
+                <span className="text-white/40">Nível {stats?.level} • {Math.round(stats?.levelProgress || 0)}%</span>
+              </div>
+              <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${stats?.levelProgress || 0}%` }}
+                  className="h-full bg-gradient-to-r from-primary-400 to-accent-400"
+                />
+              </div>
+            </div>
+          </div>
       </section>
 
       {/* IA Action Area */}
@@ -81,10 +98,10 @@ export default async function DashboardPage() {
           color="danger"
         />
         <StatCard 
-          title="Foco" 
+          title="Foco Total" 
           value={stats?.focusHours || "0h"} 
           icon={<Clock className="w-5 h-5 text-blue-400" />} 
-          trend="Meta diária"
+          trend="Tempo acumulado"
         />
       </div>
 
@@ -161,7 +178,4 @@ export default async function DashboardPage() {
   );
 }
 
-// Minimal utility function locally for speed
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(" ");
-}
+// Local cn utility removed in favor of imported one from @/lib/utils

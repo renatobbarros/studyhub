@@ -71,7 +71,46 @@ export async function parseScheduleWithAI(text: string) {
   const { addXP } = await import("./gamification");
   await addXP(100);
 
-  return { success: true };
+  return { success: true, message: `${extractedData.length} tarefas extraídas com sucesso!` };
+}
+
+/**
+ * Novo: Processa um arquivo PDF de cronograma usando IA
+ */
+export async function parseSchedulePDF(formData: FormData) {
+  const session = await verifyServerSession();
+  if (!session) throw new Error("Unauthorized");
+
+  const file = formData.get("file") as File;
+  if (!file) return { success: false, message: "Nenhum arquivo enviado" };
+
+  // Importar dinamicamente biblioteca de servidor
+  let pdf;
+  try {
+    // Tentativa de importação compatível com diferentes ambientes node
+    const pdfLib = await import("pdf-parse");
+    pdf = (pdfLib as any).default || pdfLib;
+  } catch (e) {
+    console.error("Erro ao carregar pdf-parse:", e);
+    return { success: false, message: "Dependência de servidor (pdf-parse) não disponível." };
+  }
+  
+  try {
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const data = await pdf(buffer);
+    const extractedText = data.text;
+
+    if (!extractedText || extractedText.trim().length === 0) {
+      return { success: false, message: "Não foi possível extrair texto do PDF." };
+    }
+
+    // Encaminha o texto extraído para o processamento de IA existente
+    return await parseScheduleWithAI(extractedText);
+  } catch (error) {
+    console.error("Erro no processamento do PDF:", error);
+    return { success: false, message: "Erro ao ler o arquivo PDF." };
+  }
 }
 
 
@@ -83,7 +122,9 @@ export async function getReinforcementVideos(subject: string) {
   if (!session) throw new Error("Unauthorized");
 
   // No futuro, usar YouTube Data API. Para o MVP, geramos links de busca otimizados.
-  const searchQuery = encodeURIComponent(`${subject} aula completa explicação`);
+  // Evitar redundância se o termo já for específico ou contiver "aula"
+  const suffix = subject.toLowerCase().includes("aula") ? "completa" : "aula completa explicação";
+  const searchQuery = encodeURIComponent(`${subject} ${suffix}`);
   
   return {
     success: true,
@@ -162,12 +203,27 @@ export async function getUserDifficulties() {
   if (!session) return { success: true, difficulties: [] };
 
   const { adminDb } = await import("@/lib/firebase/admin");
+  
+  // 1. Dificuldades manuais do perfil do usuário
   const userSnap = await adminDb.collection("users").doc(session.uid).get();
+  const manualDifficulties = userSnap.data()?.subjectDifficulties || [];
 
-  if (!userSnap.exists) return { success: true, difficulties: [] };
+  // 2. Assuntos do Desacumulo marcados como NÃO dominados
+  // Buscamos os nomes únicos das matérias onde mastered é false
+  const desacumuloSnap = await adminDb.collection("desacumulo")
+    .where("userId", "==", session.uid)
+    .where("mastered", "==", false)
+    .get();
+  
+  const desacumuloDifficulties = Array.from(new Set(
+    desacumuloSnap.docs.map((doc: any) => doc.data().subject)
+  ));
+
+  // Combinar ambos sem duplicatas
+  const combined = Array.from(new Set([...manualDifficulties, ...desacumuloDifficulties]));
   
   return { 
     success: true, 
-    difficulties: userSnap.data()?.subjectDifficulties || [] 
+    difficulties: combined 
   };
 }

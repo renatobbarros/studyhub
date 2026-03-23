@@ -4,6 +4,18 @@ import { adminDb } from "@/lib/firebase/admin";
 import { verifyServerSession } from "./auth";
 import { revalidatePath } from "next/cache";
 import { FieldValue } from "firebase-admin/firestore";
+import { startOfDay, isYesterday, isToday } from "date-fns";
+
+export const LEVEL_TITLES = [
+  "Novato do Hub", // Level 1
+  "Explorador de Ideias", // Level 2
+  "Estudante Aplicado", // Level 3
+  "Mestre dos Resumos", // Level 4
+  "Sábio da Guilda", // Level 5
+  "Lenda Acadêmica", // Level 6+
+];
+
+export const XP_PER_LEVEL = 200; // 200 XP por nível para tornar o progresso visível mas desafiador
 
 /**
  * Adiciona XP ao usuário e verifica se ele subiu de nível.
@@ -30,10 +42,11 @@ export async function addXP(amount: number) {
   }
 
   const userData = userSnap.data()!;
-  const newXp = (userData.xp || 0) + amount;
+  const oldXp = userData.xp || 0;
+  const newXp = oldXp + amount;
   
-  // Lógica simples de Level Up (ex: 100 XP por level)
-  const newLevel = Math.floor(newXp / 100) + 1;
+  // Lógica de Level Up baseada na constante XP_PER_LEVEL
+  const newLevel = Math.floor(newXp / XP_PER_LEVEL) + 1;
   const leveledUp = newLevel > (userData.level || 1);
 
   await userRef.update({
@@ -46,6 +59,41 @@ export async function addXP(amount: number) {
   revalidatePath("/ranking");
 
   return { success: true, newXp, newLevel, leveledUp };
+}
+
+/**
+ * Retorna informações sobre o nível atual baseado no XP.
+ */
+export function getLevelInfo(xp: number) {
+  const level = Math.floor(xp / XP_PER_LEVEL) + 1;
+  const title = LEVEL_TITLES[Math.min(level - 1, LEVEL_TITLES.length - 1)];
+  const xpInLevel = xp % XP_PER_LEVEL;
+  const progress = (xpInLevel / XP_PER_LEVEL) * 100;
+  
+  return { level, title, progress, nextLevelXp: XP_PER_LEVEL - xpInLevel };
+}
+
+/**
+ * Salva uma sessão de foco concluída.
+ */
+export async function saveFocusSession(minutes: number) {
+  const decoded = await verifyServerSession();
+  if (!decoded) throw new Error("Unauthorized");
+
+  const now = new Date();
+  const sessionRef = adminDb.collection("focus_sessions").doc();
+  
+  await sessionRef.set({
+    userId: decoded.uid,
+    duration: minutes,
+    createdAt: now.toISOString(),
+  });
+
+  // Recompensar com XP também (25 XP por sessão de 25min)
+  const xpReward = Math.floor((minutes / 25) * 25);
+  await addXP(xpReward);
+
+  return { success: true };
 }
 
 /**
