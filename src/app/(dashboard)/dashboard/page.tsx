@@ -8,7 +8,7 @@ import ScheduleUpload from "@/components/dashboard/ScheduleUpload";
 import ReinforcementSection from "@/components/dashboard/ReinforcementSection";
 import DifficultyToggle from "@/components/dashboard/DifficultyToggle";
 import { Trophy, Clock, Flame, CheckCircle2, Star, Target, Users, Zap, Calendar as CalendarIcon, Brain } from "lucide-react";
-import { motion } from "framer-motion";
+import { LevelProgressBar } from "@/components/dashboard/LevelProgressBar";
 import { cn } from "@/lib/utils";
 
 export default async function DashboardPage() {
@@ -58,20 +58,12 @@ export default async function DashboardPage() {
               Mantenha o foco para subir de nível!
             </p>
 
-            {/* Level Progress Bar */}
-            <div className="mt-8 space-y-2 max-w-sm">
-              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
-                <span className="text-primary-300">{stats?.levelTitle || "Novato"}</span>
-                <span className="text-white/40">Nível {stats?.level} • {Math.round(stats?.levelProgress || 0)}%</span>
-              </div>
-              <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${stats?.levelProgress || 0}%` }}
-                  className="h-full bg-gradient-to-r from-primary-400 to-accent-400"
-                />
-              </div>
-            </div>
+            {/* Level Progress Bar extracted to Client Component */}
+            <LevelProgressBar 
+              level={stats?.level || 1} 
+              levelProgress={stats?.levelProgress || 0} 
+              levelTitle={stats?.levelTitle || "Novato"} 
+            />
           </div>
       </section>
 
