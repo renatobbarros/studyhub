@@ -5,39 +5,48 @@ import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Plus, Trash2, CheckCircle2, Calendar as CalendarIcon, Star, Zap, Layers, Filter, ChevronRight, ChevronLeft, MoreHorizontal, Clock, ArrowRight } from "lucide-react";
-import { deleteTask, updateTaskStatus } from "@/actions/tasks";
-import { completeTask } from "@/actions/gamification";
-import { motion, AnimatePresence } from "framer-motion";
+import { getSubjects } from "@/actions/subjects";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { deleteTask } from "@/actions/tasks";
+import type { Subject } from "@/actions/subjects";
+import SubjectOnboardingModal from "@/components/modals/SubjectOnboardingModal";
 import AddTaskModal from "@/components/modals/AddTaskModal";
+import { updateTask } from "@/actions/tasks";
 
 interface Task {
   id: string;
   title: string;
   description?: string;
   dueDate?: string;
+  subjectId?: string;
   status: "todo" | "in_progress" | "done";
   xpReward: number;
 }
 
-const COLUMNS = [
-    { id: "todo", label: "A Fazer", color: "text-foreground/40", bg: "bg-foreground/5" },
-    { id: "in_progress", label: "Em Progresso", color: "text-accent-500", bg: "bg-accent-500/10" },
-    { id: "done", label: "Concluído", color: "text-primary-500", bg: "bg-primary-500/10" }
-];
-
 export default function CalendarPage() {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterView, setFilterView] = useState<"weekly" | "monthly">("weekly");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
 
-    const q = query(collection(db, "tasks"), where("userId", "==", user.uid));
+    // Load subjects
+    const loadSubjects = async () => {
+      const res = await getSubjects();
+      if (res.success) {
+        setSubjects(res.subjects);
+        if (res.subjects.length === 0) setIsOnboardingOpen(true);
+      }
+    };
+    loadSubjects();
 
+    const q = query(collection(db, "tasks"), where("userId", "==", user.uid));
     const unsubscribe = onSnapshot(q, (snapshot: any) => {
       const tasksData = snapshot.docs.map((doc: any) => ({
         id: doc.id,
@@ -51,7 +60,7 @@ export default function CalendarPage() {
   }, [user]);
 
   // Lógica de filtragem por data
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = tasks.filter((task: Task) => {
     if (!task.dueDate) return true;
     const taskDate = new Date(task.dueDate);
     const now = new Date();
@@ -72,11 +81,10 @@ export default function CalendarPage() {
     }
   });
 
-  const getTasksByStatus = (status: string) => filteredTasks.filter((t: Task) => (t.status || "todo") === status);
+  const getTasksBySubject = (subjectId: string) => filteredTasks.filter((t: Task) => t.subjectId === subjectId);
 
-  const handleMoveStatus = async (taskId: string, currentStatus: string) => {
-    const nextStatus = currentStatus === "todo" ? "in_progress" : "done";
-    await updateTaskStatus(taskId, nextStatus);
+  const handleMoveSubject = async (taskId: string, targetSubjectId: string) => {
+    await updateTask(taskId, { subjectId: targetSubjectId });
   };
 
   return (
@@ -124,25 +132,22 @@ export default function CalendarPage() {
       </header>
 
       {/* Kanban Board */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <AnimatePresence mode="popLayout">
-            {COLUMNS.map((col) => (
-                <div key={col.id} className="flex flex-col gap-6 min-h-[600px]">
+            {subjects.map((sub) => (
+                <div key={sub.id} className="flex flex-col gap-6 min-h-[600px]">
                     <div className="flex items-center justify-between px-2">
                         <div className="flex items-center gap-3">
-                            <div className={cn("w-2 h-6 rounded-full", col.id === 'todo' ? 'bg-foreground/20' : col.id === 'in_progress' ? 'bg-accent-500' : 'bg-primary-500')} />
-                            <h2 className="text-lg font-black tracking-tight text-foreground uppercase">{col.label}</h2>
+                            <div className="w-2 h-6 rounded-full bg-primary-500" />
+                            <h2 className="text-lg font-black tracking-tight text-foreground uppercase">{sub.name}</h2>
                             <span className="px-2 py-0.5 rounded-lg bg-foreground/5 text-foreground/30 text-[10px] font-bold">
-                                {getTasksByStatus(col.id).length}
+                                {sub.days.join(", ")}
                             </span>
                         </div>
-                        <button className="p-2 rounded-lg hover:bg-foreground/5 text-foreground/20 transition">
-                            <MoreHorizontal className="w-4 h-4" />
-                        </button>
                     </div>
 
-                    <div className={cn("flex-1 rounded-[2.5rem] p-4 space-y-4 border border-foreground/5 transition-colors", col.bg)}>
-                        {getTasksByStatus(col.id).map((task) => (
+                    <div className="flex-1 rounded-[2.5rem] p-4 space-y-4 border border-foreground/5 bg-foreground/5 transition-colors">
+                        {getTasksBySubject(sub.id).map((task) => (
                             <motion.div
                                 key={task.id}
                                 layout
@@ -154,12 +159,14 @@ export default function CalendarPage() {
                                 <div className="space-y-3">
                                     <div className="flex items-start justify-between gap-2">
                                         <h3 className="font-bold text-foreground leading-tight group-hover:text-primary-600 transition-colors uppercase tracking-tight italic">{task.title}</h3>
-                                        <button 
-                                            onClick={() => deleteTask(task.id)}
-                                            className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-danger-500/10 text-danger-500 transition-all"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button 
+                                                onClick={() => deleteTask(task.id)}
+                                                className="p-1.5 rounded-lg hover:bg-danger-500/10 text-danger-500 transition-all font-black text-[10px]"
+                                            >
+                                                EXCLUIR
+                                            </button>
+                                        </div>
                                     </div>
                                     
                                     {task.description && (
@@ -172,32 +179,26 @@ export default function CalendarPage() {
                                                 <Clock className="w-3 h-3" />
                                                 {task.dueDate ? new Date(task.dueDate).toLocaleDateString([], { day: '2-digit', month: '2-digit' }) : "S/P"}
                                             </div>
-                                            <div className="flex items-center gap-1 text-[10px] font-black text-primary-600/60 uppercase">
-                                                <Star className="w-3 h-3 fill-primary-600/20" /> {task.xpReward} XP
-                                            </div>
                                         </div>
-
-                                        {col.id !== "done" && (
-                                            <button 
-                                                onClick={() => handleMoveStatus(task.id, col.id)}
-                                                className="p-2 rounded-xl bg-foreground/5 hover:bg-primary-500 text-foreground/40 hover:text-white transition group/btn"
-                                            >
-                                                <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition" />
-                                            </button>
-                                        )}
-                                        {col.id === "done" && (
-                                            <div className="p-2 rounded-xl bg-primary-500/20 text-primary-500">
-                                                <CheckCircle2 className="w-4 h-4" />
-                                            </div>
-                                        )}
+                                        
+                                        <button 
+                                          onClick={() => {
+                                            const nextIdx = (subjects.findIndex(s => s.id === sub.id) + 1) % subjects.length;
+                                            handleMoveSubject(task.id, subjects[nextIdx].id);
+                                          }}
+                                          className="p-2 rounded-xl bg-foreground/5 hover:bg-primary-500 text-foreground/40 hover:text-white transition group/btn"
+                                          title="Mover para próxima matéria"
+                                        >
+                                            <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition" />
+                                        </button>
                                     </div>
                                 </div>
                             </motion.div>
                         ))}
 
-                        {getTasksByStatus(col.id).length === 0 && !loading && (
+                        {getTasksBySubject(sub.id).length === 0 && !loading && (
                             <div className="h-32 flex flex-col items-center justify-center border-2 border-dashed border-foreground/5 rounded-3xl opacity-20 italic text-xs font-bold uppercase tracking-widest">
-                                Vázio
+                                Sem missões
                             </div>
                         )}
                     </div>
@@ -206,7 +207,18 @@ export default function CalendarPage() {
         </AnimatePresence>
       </div>
 
-      <AddTaskModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <AddTaskModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        subjects={subjects}
+      />
+      <SubjectOnboardingModal 
+        isOpen={isOnboardingOpen} 
+        onClose={() => {
+            setIsOnboardingOpen(false);
+            window.location.reload(); // Refresh to load subjects
+        }} 
+      />
     </div>
   );
 }

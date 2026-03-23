@@ -13,9 +13,10 @@ export async function addDesacumuloEntry(content: string, subject: string = "Ger
   const decoded = await verifyServerSession();
   if (!decoded) throw new Error("Unauthorized");
 
-  // 1. Extrair palavras-chave usando Cerebras
+  // 1. Extrair informações e formatar conteúdo usando Cerebras
   const apiKey = process.env.CEREBRAS_API_KEY;
   let keywords = [subject, content.split(" ")[0]].filter(Boolean); // Fallback
+  let formattedContent = content; // Fallback
 
   if (apiKey) {
     const client = new OpenAI({
@@ -23,28 +24,47 @@ export async function addDesacumuloEntry(content: string, subject: string = "Ger
       baseURL: "https://api.cerebras.ai/v1",
     });
 
+    const prompt = `Analise o seguinte conteúdo sobre a matéria "${subject}".
+Sua tarefa é retornar um JSON com a seguinte estrutura:
+{
+  "formattedContent": "O texto reescrito estritamente em formato de *bullet points*. A primeira linha com um '-' deve ser o assunto principal, e os bullet points indentados devem conter os subtópicos e detalhes importantes.",
+  "searchQueries": ["termo de busca 1", "termo de busca 2"] // Até 2 termos curtos muito específicos sobre os tópicos da aula, focados em encontrar videoaulas no YouTube
+}
+O 'formattedContent' NÃO DEVE conter introduções ou conclusões, apenas a lista em bullet points. Exemplo de formatação:
+- Assunto Principal
+  - Tópico menor associado
+  - Outro tópico com detalhes
+Retorne APENAS JSON válido.`;
+
     try {
       const response = await client.chat.completions.create({
         messages: [{ 
             role: "system", 
-            content: "Você é um assistente acadêmico. Extraia os 2 termos mais importantes para busca no YouTube do texto abaixo. Retorne apenas os termos separados por vírgula." 
+            content: "Você é um assistente acadêmico estruturador de dados." 
         }, { 
             role: "user", 
-            content: `Matéria: ${subject}. Conteúdo: ${content}` 
+            content: `${prompt}\n\nConteúdo original:\n${content}`
         }],
         model: "llama3.3-70b",
+        response_format: { type: "json_object" },
       });
 
-      const extracted = response.choices[0].message.content;
-      if (extracted) {
-        keywords = extracted.split(",").map((k: string) => k.trim());
+      const messageContent = response.choices[0].message.content;
+      if (messageContent) {
+        const parsed = JSON.parse(messageContent);
+        if (parsed.formattedContent) {
+          formattedContent = parsed.formattedContent;
+        }
+        if (parsed.searchQueries && Array.isArray(parsed.searchQueries) && parsed.searchQueries.length > 0) {
+          keywords = parsed.searchQueries;
+        }
       }
     } catch (error) {
-      console.error("Erro na extração de keywords da IA:", error);
+      console.error("Erro na estruturação via Cerebras:", error);
     }
   }
 
-  // 2. Buscar vídeos para cada keyword
+  // 2. Buscar vídeos para cada keyword extraída (searchQueries)
   const allVideos = [];
   for (const kw of keywords) {
     const res = await getReinforcementVideos(kw);
@@ -56,7 +76,7 @@ export async function addDesacumuloEntry(content: string, subject: string = "Ger
   // 3. Salvar no Firestore
   const entryRef = adminDb.collection("desacumulo").doc();
   await entryRef.set({
-    content,
+    content: formattedContent,
     subject,
     userName: decoded.name || "Estudante",
     userId: decoded.uid,

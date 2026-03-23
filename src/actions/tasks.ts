@@ -68,7 +68,7 @@ export async function updateTaskStatus(taskId: string, status: string) {
   return { success: true };
 }
 
-export async function updateTask(taskId: string, data: Partial<{ title: string; description: string; dueDate: Date; status: string }>) {
+export async function updateTask(taskId: string, updates: Partial<{ title: string; description: string; dueDate: Date | string; subjectId: string; status: string }>) {
   const decoded = await verifyServerSession();
   if (!decoded) throw new Error("Unauthorized");
 
@@ -79,9 +79,17 @@ export async function updateTask(taskId: string, data: Partial<{ title: string; 
     throw new Error("Unauthorized or not found");
   }
 
-  const updateData: any = { ...data };
-  if (data.dueDate) updateData.dueDate = data.dueDate.toISOString();
-  if (data.status) updateData.completed = data.status === "done";
+  const updateData: any = { ...updates };
+  
+  // Tratar conversão de data se necessário
+  if (updates.dueDate instanceof Date) {
+    updateData.dueDate = updates.dueDate.toISOString();
+  }
+  
+  // Sincronizar campo completed para legado
+  if (updates.status) {
+    updateData.completed = updates.status === "done";
+  }
 
   await docRef.update(updateData);
 

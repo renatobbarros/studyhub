@@ -3,18 +3,25 @@
 import { useState, FormEvent, ChangeEvent } from "react";
 import { X, Calendar as CalendarIcon, Star, Plus, Loader2 } from "lucide-react";
 import { createTask } from "@/actions/tasks";
+import type { Subject } from "@/actions/subjects";
 
 interface AddTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
+  subjects: Subject[];
 }
 
-export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
+export default function AddTaskModal({ isOpen, onClose, subjects }: AddTaskModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [status, setStatus] = useState("todo");
+  const [subjectId, setSubjectId] = useState(subjects[0]?.id || "");
   const [loading, setLoading] = useState(false);
+
+  // Sync subjectId if subjects load late
+  useState(() => {
+    if (!subjectId && subjects.length > 0) setSubjectId(subjects[0].id);
+  });
 
   if (!isOpen) return null;
 
@@ -28,7 +35,8 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
         title,
         description,
         dueDate: dueDate ? new Date(dueDate) : undefined,
-        status,
+        subjectId,
+        status: "todo",
       });
       setTitle("");
       setDescription("");
@@ -72,6 +80,20 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
           </div>
 
           <div className="space-y-2">
+            <label className="text-xs font-black uppercase tracking-widest text-foreground/40 ml-4">Matéria Relacionada</label>
+            <select
+                value={subjectId}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => setSubjectId(e.target.value)}
+                className="w-full bg-foreground/5 border-none rounded-2xl p-4 text-sm font-bold text-foreground focus:ring-2 ring-primary-500 transition outline-none appearance-none cursor-pointer"
+                required
+            >
+                {subjects.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-widest text-foreground/40 ml-4">Detalhes (Opcional)</label>
             <textarea
               value={description}
@@ -81,8 +103,7 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="space-y-2">
                 <label className="text-xs font-black uppercase tracking-widest text-foreground/40 ml-4">Prazo</label>
                 <div className="relative">
                     <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/20" />
@@ -93,19 +114,6 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
                         className="w-full bg-foreground/5 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-foreground focus:ring-2 ring-primary-500 transition outline-none appearance-none"
                     />
                 </div>
-            </div>
-            <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-foreground/40 ml-4">Status Inicial</label>
-                <select
-                    value={status}
-                    onChange={(e: ChangeEvent<HTMLSelectElement>) => setStatus(e.target.value)}
-                    className="w-full bg-foreground/5 border-none rounded-2xl p-4 text-sm font-bold text-foreground focus:ring-2 ring-primary-500 transition outline-none appearance-none"
-                >
-                    <option value="todo">A Fazer</option>
-                    <option value="in_progress">Em Progresso</option>
-                    <option value="done">Concluído</option>
-                </select>
-            </div>
           </div>
 
           <div className="flex items-center justify-between pt-4">

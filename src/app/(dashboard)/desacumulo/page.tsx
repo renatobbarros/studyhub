@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Send, Zap, User, Video, ExternalLink, Loader2, Sparkles, Trash2, Filter } from "lucide-react";
+import { Send, Zap, User, Video, ExternalLink, Loader2, Sparkles, Trash2, Filter, Pencil } from "lucide-react";
 import { addDesacumuloEntry, getDesacumuloFeed, deleteDesacumuloEntry } from "@/actions/desacumulo";
 import { useAuth } from "@/components/providers/AuthProvider";
-
-const SUBJECTS = ["Geral", "Cálculo", "Anatomia", "Direito", "História", "Programação", "Psicologia"];
+import { getSubjects } from "@/actions/subjects";
+import type { Subject } from "@/actions/subjects";
+import { SubjectCrudModal } from "@/components/subjects/SubjectCrudModal";
 
 export default function DesacumuloPage() {
   const { user } = useAuth();
@@ -15,6 +16,19 @@ export default function DesacumuloPage() {
   const [filterSubject, setFilterSubject] = useState("Geral");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const loadSubjects = async () => {
+    const res = await getSubjects();
+    if (res.success && res.subjects) {
+      setSubjects(res.subjects);
+    }
+  };
+
+  useEffect(() => {
+    loadSubjects();
+  }, []);
 
   useEffect(() => {
     loadFeed();
@@ -81,20 +95,28 @@ export default function DesacumuloPage() {
       <section className="relative group">
         <div className="absolute -inset-1 bg-gradient-to-r from-primary-600 to-accent-500 rounded-[2.5rem] blur opacity-25 group-focus-within:opacity-50 transition duration-1000"></div>
         <form onSubmit={handleSubmit} className="relative rounded-[2rem] border bg-background/80 backdrop-blur-xl p-8 glass flex flex-col gap-6 ring-1 ring-primary-500/10 shadow-2xl">
-          <div className="flex flex-wrap gap-2">
-            {SUBJECTS.filter(s => s !== "Geral").map(s => (
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="px-3 py-1.5 rounded-full text-xs font-bold transition-all border bg-foreground/5 border-transparent text-foreground/40 hover:bg-foreground/10 flex items-center gap-1"
+              title="Gerenciar Matérias"
+            >
+              <Pencil className="w-3.5 h-3.5" /> Editar Matérias
+            </button>
+            {subjects.map(s => (
               <button
-                key={s}
+                key={s.id}
                 type="button"
-                onClick={() => setSelectedSubject(s)}
+                onClick={() => setSelectedSubject(s.name)}
                 className={cn(
                   "px-4 py-1.5 rounded-full text-xs font-bold transition-all border",
-                  selectedSubject === s 
+                  selectedSubject === s.name 
                     ? "bg-primary-600 border-primary-600 text-white" 
                     : "bg-foreground/5 border-transparent text-foreground/40 hover:bg-foreground/10"
                 )}
               >
-                {s}
+                {s.name}
               </button>
             ))}
           </div>
@@ -125,18 +147,29 @@ export default function DesacumuloPage() {
         <div className="flex items-center gap-2 text-foreground/40 font-bold text-sm whitespace-nowrap">
           <Filter className="w-4 h-4" /> Filtrar:
         </div>
-        {SUBJECTS.map(s => (
+        <button
+          onClick={() => setFilterSubject("Geral")}
+          className={cn(
+            "px-5 py-2 rounded-2xl text-sm font-bold transition-all border whitespace-nowrap",
+            filterSubject === "Geral" 
+              ? "bg-accent-500 border-accent-500 text-white shadow-lg shadow-accent-500/20" 
+              : "bg-background/40 border-foreground/5 text-foreground/60 hover:bg-background/60"
+          )}
+        >
+          Geral
+        </button>
+        {subjects.map(s => (
           <button
-            key={s}
-            onClick={() => setFilterSubject(s)}
+            key={s.id}
+            onClick={() => setFilterSubject(s.name)}
             className={cn(
               "px-5 py-2 rounded-2xl text-sm font-bold transition-all border whitespace-nowrap",
-              filterSubject === s 
+              filterSubject === s.name 
                 ? "bg-accent-500 border-accent-500 text-white shadow-lg shadow-accent-500/20" 
                 : "bg-background/40 border-foreground/5 text-foreground/60 hover:bg-background/60"
             )}
           >
-            {s}
+            {s.name}
           </button>
         ))}
       </section>
@@ -223,6 +256,12 @@ export default function DesacumuloPage() {
           </div>
         )}
       </section>
+      <SubjectCrudModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        subjects={subjects} 
+        onUpdate={loadSubjects} 
+      />
     </div>
   );
 }
