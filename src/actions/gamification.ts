@@ -3,19 +3,7 @@
 import { adminDb } from "@/lib/firebase/admin";
 import { verifyServerSession } from "./auth";
 import { revalidatePath } from "next/cache";
-import { FieldValue } from "firebase-admin/firestore";
-import { startOfDay, isYesterday, isToday } from "date-fns";
-
-export const LEVEL_TITLES = [
-  "Novato do Hub", // Level 1
-  "Explorador de Ideias", // Level 2
-  "Estudante Aplicado", // Level 3
-  "Mestre dos Resumos", // Level 4
-  "Sábio da Guilda", // Level 5
-  "Lenda Acadêmica", // Level 6+
-];
-
-export const XP_PER_LEVEL = 200; // 200 XP por nível para tornar o progresso visível mas desafiador
+import { XP_PER_LEVEL } from "@/lib/gamification-utils";
 
 /**
  * Adiciona XP ao usuário e verifica se ele subiu de nível.
@@ -61,17 +49,7 @@ export async function addXP(amount: number) {
   return { success: true, newXp, newLevel, leveledUp };
 }
 
-/**
- * Retorna informações sobre o nível atual baseado no XP.
- */
-export function getLevelInfo(xp: number) {
-  const level = Math.floor(xp / XP_PER_LEVEL) + 1;
-  const title = LEVEL_TITLES[Math.min(level - 1, LEVEL_TITLES.length - 1)];
-  const xpInLevel = xp % XP_PER_LEVEL;
-  const progress = (xpInLevel / XP_PER_LEVEL) * 100;
-  
-  return { level, title, progress, nextLevelXp: XP_PER_LEVEL - xpInLevel };
-}
+
 
 /**
  * Salva uma sessão de foco concluída.

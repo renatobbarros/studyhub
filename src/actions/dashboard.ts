@@ -3,7 +3,7 @@
 import { adminDb } from "@/lib/firebase/admin";
 import { verifyServerSession } from "./auth";
 import { startOfWeek, endOfWeek, startOfDay } from "date-fns";
-import { getLevelInfo } from "./gamification";
+import { getLevelInfo } from "@/lib/gamification-utils";
 
 export async function getDashboardStats() {
   const session = await verifyServerSession();
