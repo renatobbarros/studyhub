@@ -19,7 +19,7 @@ export default function DifficultyToggle({ subject, isInitialDifficulty = false 
     setLoading(true);
     const res = await toggleSubjectDifficulty(subject);
     if (res.success) {
-      setIsDifficulty(res.added);
+      setIsDifficulty(res.added ?? false);
       router.refresh(); // Refresh to update the ReinforcementSection if it's on the same page
     }
     setLoading(false);

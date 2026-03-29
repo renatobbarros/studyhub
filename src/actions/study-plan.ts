@@ -94,6 +94,7 @@ export async function parseSchedulePDF(formData: FormData) {
   let pdf;
   try {
     // Tentativa de importação compatível com diferentes ambientes node
+    // @ts-ignore - pdf-parse não possui tipos atualizados mas funciona em runtime
     const pdfLib = await import("pdf-parse");
     pdf = (pdfLib as any).default || pdfLib;
   } catch (e) {

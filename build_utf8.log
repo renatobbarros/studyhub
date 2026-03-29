@@ -1,0 +1,723 @@
+﻿
+> studyhub@0.1.0 build
+> next build
+
+▲ Next.js 16.2.0 (Turbopack)
+
+  Creating an optimized production build ...
+node.exe : 
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (:String) [],    
+ RemoteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+> Build error occurred
+Error: Turbopack build 
+failed with 9 errors:
+./src/actions/gamificat
+ion.ts:18:1
+Only async functions 
+are allowed to be 
+exported in a "use 
+server" file.
+  [90m16 |[0m ];
+  [90m17 |[0m
+[31m[1m>[0m [90m18 
+|[0m [36mexport[0m 
+[36mconst[0m 
+[33mXP_PER_LEVEL[0m 
+= [35m200[0m; 
+[90m// 200 XP por 
+nível para tornar o 
+progresso visível mas 
+d...[0m
+  [90m   |[0m [31m[
+1m^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^[0m
+  [90m19 |[0m
+  [90m20 |[0m /**
+  [90m21 |[0m  * 
+[33mAdiciona[0m 
+[33mXP[0m ao usuário 
+e verifica se ele 
+subiu de nível.
+
+Ecmascript file had an 
+error
+
+Import traces:
+  #1 [Server 
+Component]:
+    ./src/actions/gamif
+ication.ts
+    
+./src/actions/tasks.ts
+
+  #2 [Server 
+Component]:
+    ./src/actions/gamif
+ication.ts
+    ./src/actions/dashb
+oard.ts
+    ./src/app/(dashboar
+d)/dashboard/page.tsx
+
+  #3 [Client Component 
+Browser]:
+    ./src/actions/gamif
+ication.ts [Client 
+Component Browser]
+    ./src/components/da
+shboard/DifficultyToggl
+e.tsx [Client 
+Component Browser]
+    ./src/components/da
+shboard/DifficultyToggl
+e.tsx [Server 
+Component]
+    ./src/app/(dashboar
+d)/dashboard/page.tsx 
+[Server Component]
+
+  #4 [Client Component 
+SSR]:
+    ./src/actions/gamif
+ication.ts [Client 
+Component SSR]
+    ./src/components/da
+shboard/DifficultyToggl
+e.tsx [Client 
+Component SSR]
+    ./src/components/da
+shboard/DifficultyToggl
+e.tsx [Server 
+Component]
+    ./src/app/(dashboar
+d)/dashboard/page.tsx 
+[Server Component]
+
+
+./src/actions/tasks.ts:
+6:1
+Export addXP doesn't 
+exist in target module
+  [90m4 |[0m 
+[36mimport[0m { 
+verifyServerSession } 
+[36mfrom[0m 
+[32m"./auth"[0m;
+  [90m5 |[0m 
+[36mimport[0m { 
+revalidatePath } 
+[36mfrom[0m 
+[32m"next/cache"[0m;
+[31m[1m>[0m [90m6 
+|[0m [36mimport[0m 
+{ addXP } 
+[36mfrom[0m [32m"./g
+amification"[0m;
+  [90m  |[0m [31m[1
+m^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m
+  [90m8 |[0m 
+[36mexport[0m 
+[36masync[0m 
+[36mfunction[0m 
+createTask(data: { 
+title: string; 
+description?: string; 
+dueDate?: 
+[33mDat.[0m..
+  [90m9 |[0m   
+[36mconst[0m decoded 
+= [36mawait[0m 
+verifyServerSession();
+
+The export addXP was 
+not found in module [pr
+oject]/src/actions/gami
+fication.ts [app-rsc] 
+(ecmascript).
+The module has no 
+exports at all.
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+
+./src/components/dashbo
+ard/AIQuizModal.tsx:6:1
+Export addXP doesn't 
+exist in target module
+  [90m4 |[0m 
+[36mimport[0m { 
+[33mX[0m, 
+[33mCheckCircle2[0m, 
+[33mAlertCircle[0m, 
+[33mLoader2[0m, 
+[33mTrophy[0m } 
+[36mfrom[0m [32m"luc
+ide-react"[0m;
+  [90m5 |[0m 
+[36mimport[0m { gener
+ateReinforcementQuestio
+ns } [36mfrom[0m [32
+m"@/actions/study-plan"
+[0m;
+[31m[1m>[0m [90m6 
+|[0m [36mimport[0m 
+{ addXP } 
+[36mfrom[0m [32m"@/a
+ctions/gamification"[0
+m;
+  [90m  |[0m [31m[1
+m^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^[0m
+  [90m7 |[0m
+  [90m8 |[0m 
+[36minterface[0m [33
+mAIQuizModalProps[0m {
+  [90m9 |[0m   
+subject: string;
+
+The export addXP was 
+not found in module [pr
+oject]/src/actions/gami
+fication.ts 
+[app-client] 
+(ecmascript).
+The module has no 
+exports at all.
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import traces:
+  Client Component 
+Browser:
+    ./src/components/da
+shboard/AIQuizModal.tsx
+ [Client Component 
+Browser]
+    ./src/components/da
+shboard/ReinforcementSe
+ction.tsx [Client 
+Component Browser]
+    ./src/components/da
+shboard/ReinforcementSe
+ction.tsx [Server 
+Component]
+    ./src/app/(dashboar
+d)/dashboard/page.tsx 
+[Server Component]
+
+  Client Component SSR:
+    ./src/components/da
+shboard/AIQuizModal.tsx
+ [Client Component SSR]
+    ./src/components/da
+shboard/ReinforcementSe
+ction.tsx [Client 
+Component SSR]
+    ./src/components/da
+shboard/ReinforcementSe
+ction.tsx [Server 
+Component]
+    ./src/app/(dashboar
+d)/dashboard/page.tsx 
+[Server Component]
+
+
+./src/components/dashbo
+ard/AIQuizModal.tsx:6:1
+Export addXP doesn't 
+exist in target module
+  [90m4 |[0m 
+[36mimport[0m { 
+[33mX[0m, 
+[33mCheckCircle2[0m, 
+[33mAlertCircle[0m, 
+[33mLoader2[0m, 
+[33mTrophy[0m } 
+[36mfrom[0m [32m"luc
+ide-react"[0m;
+  [90m5 |[0m 
+[36mimport[0m { gener
+ateReinforcementQuestio
+ns } [36mfrom[0m [32
+m"@/actions/study-plan"
+[0m;
+[31m[1m>[0m [90m6 
+|[0m [36mimport[0m 
+{ addXP } 
+[36mfrom[0m [32m"@/a
+ctions/gamification"[0
+m;
+  [90m  |[0m [31m[1
+m^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^[0m
+  [90m7 |[0m
+  [90m8 |[0m 
+[36minterface[0m [33
+mAIQuizModalProps[0m {
+  [90m9 |[0m   
+subject: string;
+
+The export addXP was 
+not found in module [pr
+oject]/src/actions/gami
+fication.ts [app-ssr] 
+(ecmascript).
+The module has no 
+exports at all.
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import traces:
+  Client Component 
+Browser:
+    ./src/components/da
+shboard/AIQuizModal.tsx
+ [Client Component 
+Browser]
+    ./src/components/da
+shboard/ReinforcementSe
+ction.tsx [Client 
+Component Browser]
+    ./src/components/da
+shboard/ReinforcementSe
+ction.tsx [Server 
+Component]
+    ./src/app/(dashboar
+d)/dashboard/page.tsx 
+[Server Component]
+
+  Client Component SSR:
+    ./src/components/da
+shboard/AIQuizModal.tsx
+ [Client Component SSR]
+    ./src/components/da
+shboard/ReinforcementSe
+ction.tsx [Client 
+Component SSR]
+    ./src/components/da
+shboard/ReinforcementSe
+ction.tsx [Server 
+Component]
+    ./src/app/(dashboar
+d)/dashboard/page.tsx 
+[Server Component]
+
+
+./src/actions/dashboard
+.ts:6:1
+Export getLevelInfo 
+doesn't exist in 
+target module
+  [90m4 |[0m 
+[36mimport[0m { 
+verifyServerSession } 
+[36mfrom[0m 
+[32m"./auth"[0m;
+  [90m5 |[0m 
+[36mimport[0m { 
+startOfWeek, 
+endOfWeek, startOfDay 
+} [36mfrom[0m 
+[32m"date-fns"[0m;
+[31m[1m>[0m [90m6 
+|[0m [36mimport[0m 
+{ getLevelInfo } 
+[36mfrom[0m [32m"./g
+amification"[0m;
+  [90m  |[0m [31m[1
+m^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^[0m
+  [90m7 |[0m
+  [90m8 |[0m 
+[36mexport[0m 
+[36masync[0m 
+[36mfunction[0m 
+getDashboardStats() {
+  [90m9 |[0m   
+[36mconst[0m session 
+= [36mawait[0m 
+verifyServerSession();
+
+The export 
+getLevelInfo was not 
+found in module [projec
+t]/src/actions/gamifica
+tion.ts [app-rsc] 
+(ecmascript).
+The module has no 
+exports at all.
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import trace:
+  Server Component:
+    ./src/actions/dashb
+oard.ts
+    ./src/app/(dashboar
+d)/dashboard/page.tsx
+
+
+./src/app/(dashboard)/t
+imer/page.tsx:5:1
+Export 
+saveFocusSession 
+doesn't exist in 
+target module
+  [90m3 |[0m 
+[36mimport[0m { 
+useState, useEffect } 
+[36mfrom[0m 
+[32m"react"[0m;
+  [90m4 |[0m 
+[36mimport[0m { 
+[33mPlay[0m, 
+[33mPause[0m, 
+[33mRotateCcw[0m, 
+[33mCoffee[0m, 
+[33mBookOpen[0m, 
+[33mTrophy[0m, 
+[33mZap[0m, 
+[33mSparkles[0m } 
+[36mfrom[0m 
+[32m"lucide-rea...[0m
+[31m[1m>[0m [90m5 
+|[0m [36mimport[0m 
+{ addXP, 
+saveFocusSession } 
+[36mfrom[0m [32m"@/a
+ctions/gamification"[0
+m;
+  [90m  |[0m [31m[1
+m^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^[0
+m
+  [90m6 |[0m 
+[36mimport[0m { 
+motion, [33mAnimatePre
+sence[0m } 
+[36mfrom[0m [32m"fra
+mer-motion"[0m;
+  [90m7 |[0m 
+[36mimport[0m { cn } 
+[36mfrom[0m 
+[32m"@/lib/utils"[0m;
+  [90m8 |[0m
+
+The export 
+saveFocusSession was 
+not found in module [pr
+oject]/src/actions/gami
+fication.ts 
+[app-client] 
+(ecmascript).
+The module has no 
+exports at all.
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import traces:
+  Client Component 
+Browser:
+    ./src/app/(dashboar
+d)/timer/page.tsx 
+[Client Component 
+Browser]
+    ./src/app/(dashboar
+d)/timer/page.tsx 
+[Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboar
+d)/timer/page.tsx 
+[Client Component SSR]
+    ./src/app/(dashboar
+d)/timer/page.tsx 
+[Server Component]
+
+
+./src/app/(dashboard)/t
+imer/page.tsx:5:1
+Export 
+saveFocusSession 
+doesn't exist in 
+target module
+  [90m3 |[0m 
+[36mimport[0m { 
+useState, useEffect } 
+[36mfrom[0m 
+[32m"react"[0m;
+  [90m4 |[0m 
+[36mimport[0m { 
+[33mPlay[0m, 
+[33mPause[0m, 
+[33mRotateCcw[0m, 
+[33mCoffee[0m, 
+[33mBookOpen[0m, 
+[33mTrophy[0m, 
+[33mZap[0m, 
+[33mSparkles[0m } 
+[36mfrom[0m 
+[32m"lucide-rea...[0m
+[31m[1m>[0m [90m5 
+|[0m [36mimport[0m 
+{ addXP, 
+saveFocusSession } 
+[36mfrom[0m [32m"@/a
+ctions/gamification"[0
+m;
+  [90m  |[0m [31m[1
+m^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^[0
+m
+  [90m6 |[0m 
+[36mimport[0m { 
+motion, [33mAnimatePre
+sence[0m } 
+[36mfrom[0m [32m"fra
+mer-motion"[0m;
+  [90m7 |[0m 
+[36mimport[0m { cn } 
+[36mfrom[0m 
+[32m"@/lib/utils"[0m;
+  [90m8 |[0m
+
+The export 
+saveFocusSession was 
+not found in module [pr
+oject]/src/actions/gami
+fication.ts [app-ssr] 
+(ecmascript).
+The module has no 
+exports at all.
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import traces:
+  Client Component 
+Browser:
+    ./src/app/(dashboar
+d)/timer/page.tsx 
+[Client Component 
+Browser]
+    ./src/app/(dashboar
+d)/timer/page.tsx 
+[Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboar
+d)/timer/page.tsx 
+[Client Component SSR]
+    ./src/app/(dashboar
+d)/timer/page.tsx 
+[Server Component]
+
+
+./src/components/dashbo
+ard/DifficultyToggle.ts
+x:5:1
+Export toggleSubjectDif
+ficulty doesn't exist 
+in target module
+  [90m3 |[0m 
+[36mimport[0m { 
+useState } 
+[36mfrom[0m 
+[32m"react"[0m;
+  [90m4 |[0m 
+[36mimport[0m { 
+[33mBrain[0m, 
+[33mLoader2[0m } 
+[36mfrom[0m [32m"luc
+ide-react"[0m;
+[31m[1m>[0m [90m5 
+|[0m [36mimport[0m 
+{ toggleSubjectDifficul
+ty } [36mfrom[0m [32
+m"@/actions/gamificatio
+n"[0m;
+  [90m  |[0m [31m[1
+m^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^[0
+m
+  [90m6 |[0m 
+[36mimport[0m { 
+useRouter } 
+[36mfrom[0m [32m"nex
+t/navigation"[0m;
+  [90m7 |[0m
+  [90m8 |[0m 
+[36minterface[0m [33
+mDifficultyToggleProps
+[0m {
+
+The export toggleSubjec
+tDifficulty was not 
+found in module [projec
+t]/src/actions/gamifica
+tion.ts [app-client] 
+(ecmascript).
+The module has no 
+exports at all.
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import trace:
+  Server Component:
+    ./src/components/da
+shboard/DifficultyToggl
+e.tsx
+    ./src/app/(dashboar
+d)/dashboard/page.tsx
+
+
+./src/components/dashbo
+ard/DifficultyToggle.ts
+x:5:1
+Export toggleSubjectDif
+ficulty doesn't exist 
+in target module
+  [90m3 |[0m 
+[36mimport[0m { 
+useState } 
+[36mfrom[0m 
+[32m"react"[0m;
+  [90m4 |[0m 
+[36mimport[0m { 
+[33mBrain[0m, 
+[33mLoader2[0m } 
+[36mfrom[0m [32m"luc
+ide-react"[0m;
+[31m[1m>[0m [90m5 
+|[0m [36mimport[0m 
+{ toggleSubjectDifficul
+ty } [36mfrom[0m [32
+m"@/actions/gamificatio
+n"[0m;
+  [90m  |[0m [31m[1
+m^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^[0
+m
+  [90m6 |[0m 
+[36mimport[0m { 
+useRouter } 
+[36mfrom[0m [32m"nex
+t/navigation"[0m;
+  [90m7 |[0m
+  [90m8 |[0m 
+[36minterface[0m [33
+mDifficultyToggleProps
+[0m {
+
+The export toggleSubjec
+tDifficulty was not 
+found in module [projec
+t]/src/actions/gamifica
+tion.ts [app-ssr] 
+(ecmascript).
+The module has no 
+exports at all.
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import trace:
+  Server Component:
+    ./src/components/da
+shboard/DifficultyToggl
+e.tsx
+    ./src/app/(dashboar
+d)/dashboard/page.tsx
+
+
+    at <unknown> (./src
+/actions/gamification.t
+s:18:1)
+    at <unknown> (./src
+/actions/tasks.ts:6:1)
+    at <unknown> (./src
+/components/dashboard/A
+IQuizModal.tsx:6:1)
+    at <unknown> (./src
+/components/dashboard/A
+IQuizModal.tsx:6:1)
+    at <unknown> (./src
+/actions/dashboard.ts:6
+:1)
+    at <unknown> (./src
+/app/(dashboard)/timer/
+page.tsx:5:1)
+    at <unknown> (./src
+/app/(dashboard)/timer/
+page.tsx:5:1)
+    at <unknown> (./src
+/components/dashboard/D
+ifficultyToggle.tsx:5:1
+)
+    at <unknown> (./src
+/components/dashboard/D
+ifficultyToggle.tsx:5:1
+)
